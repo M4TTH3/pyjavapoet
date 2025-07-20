@@ -21,25 +21,13 @@ class CodeBlock:
     """
 
     def __init__(self, format_parts: List[str], args: List[Any]):
-        """
-        Initialize a new CodeBlock.
-
-        Args:
-            format_parts: The format string parts
-            args: The arguments to format with
-        """
         self.format_parts = format_parts
         self.args = args
 
     def emit(self, code_writer: "CodeWriter") -> None:
-        """
-        Emit this code block to a CodeWriter.
-
-        Args:
-            code_writer: The CodeWriter to emit to
-        """
         arg_index = 0
 
+        code_writer.indent_more()
         for part in self.format_parts:
             # Look for placeholders like $L, $S, $T, $N
             placeholder_match = re.search(r"\$([LSTN])", part)
@@ -86,13 +74,9 @@ class CodeBlock:
                 # No placeholders, emit the whole part
                 code_writer.emit(part)
 
-    def __str__(self) -> str:
-        """
-        Get a string representation of this code block.
+        code_writer.indent_less()
 
-        Returns:
-            A string representation
-        """
+    def __str__(self) -> str:
         from pyjavapoet.code_writer import CodeWriter
 
         writer = CodeWriter()
@@ -101,40 +85,14 @@ class CodeBlock:
 
     @staticmethod
     def of(format_string: str, *args) -> "CodeBlock":
-        """
-        Create a CodeBlock from a format string and arguments.
-
-        Args:
-            format_string: The format string
-            *args: The arguments to format with
-
-        Returns:
-            A new CodeBlock
-        """
         return CodeBlock.builder().add(format_string, *args).build()
 
     @staticmethod
     def builder() -> "Builder":
-        """
-        Create a new CodeBlock builder.
-
-        Returns:
-            A new Builder
-        """
         return CodeBlock.Builder()
 
     @staticmethod
     def join_to_code(code_blocks: List["CodeBlock"], separator: str) -> "CodeBlock":
-        """
-        Join multiple CodeBlocks with a separator.
-
-        Args:
-            code_blocks: The CodeBlocks to join
-            separator: The separator to use
-
-        Returns:
-            A new CodeBlock
-        """
         if not code_blocks:
             return CodeBlock([], [])
 
@@ -156,23 +114,10 @@ class CodeBlock:
         """
 
         def __init__(self):
-            """
-            Initialize a new Builder.
-            """
             self.format_parts = []
             self.args = []
 
         def add(self, format_string: str, *args) -> "CodeBlock.Builder":
-            """
-            Add a format string and arguments.
-
-            Args:
-                format_string: The format string
-                *args: The arguments to format with
-
-            Returns:
-                self for chaining
-            """
             # Check for arguments in the format string
             pattern = r"\$([LSTN])"
             matches = list(re.finditer(pattern, format_string))
@@ -204,66 +149,24 @@ class CodeBlock:
             return self
 
         def add_statement(self, format_string: str, *args) -> "CodeBlock.Builder":
-            """
-            Add a statement with arguments.
-
-            Args:
-                format_string: The format string
-                *args: The arguments to format with
-
-            Returns:
-                self for chaining
-            """
             self.add(format_string, *args)
             self.add(";\n")
             return self
 
         def begin_control_flow(self, control_flow_string: str, *args) -> "CodeBlock.Builder":
-            """
-            Begin a control flow statement.
-
-            Args:
-                control_flow_string: The control flow string (e.g., "if ($L)")
-                *args: The arguments to format with
-
-            Returns:
-                self for chaining
-            """
             self.add(control_flow_string, *args)
             self.add(" {\n")
             return self
 
         def next_control_flow(self, control_flow_string: str, *args) -> "CodeBlock.Builder":
-            """
-            Continue a control flow statement.
-
-            Args:
-                control_flow_string: The control flow string (e.g., "else if ($L)")
-                *args: The arguments to format with
-
-            Returns:
-                self for chaining
-            """
             self.add("} ")
             self.add(control_flow_string, *args)
             self.add(" {\n")
             return self
 
         def end_control_flow(self) -> "CodeBlock.Builder":
-            """
-            End a control flow statement.
-
-            Returns:
-                self for chaining
-            """
             self.add("}\n")
             return self
 
         def build(self) -> "CodeBlock":
-            """
-            Build a new CodeBlock.
-
-            Returns:
-                A new CodeBlock
-            """
             return CodeBlock(self.format_parts.copy(), self.args.copy())

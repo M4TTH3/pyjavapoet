@@ -44,65 +44,25 @@ class TypeSpec:
         """
 
         def __init__(self, type_name: TypeName):
-            """
-            Initialize a new AnonymousClassBuilder.
-
-            Args:
-                type_name: The type being extended or implemented
-            """
             self.type_name = type_name
             self.type_spec_builder = TypeSpec.builder("")
             self.constructor_args_format = ""
             self.constructor_args = []
 
         def add_super_class_constructor_argument(self, format_string: str, *args) -> "TypeSpec.AnonymousClassBuilder":
-            """
-            Add an argument to the super class constructor call.
-
-            Args:
-                format_string: The format string
-                *args: The arguments to format with
-
-            Returns:
-                self for chaining
-            """
             self.constructor_args_format = format_string
             self.constructor_args.extend(args)
             return self
 
         def add_method(self, method_spec: MethodSpec) -> "TypeSpec.AnonymousClassBuilder":
-            """
-            Add a method to the anonymous class.
-
-            Args:
-                method_spec: The method to add
-
-            Returns:
-                self for chaining
-            """
             self.type_spec_builder.add_method(method_spec)
             return self
 
         def add_field(self, field_spec: FieldSpec) -> "TypeSpec.AnonymousClassBuilder":
-            """
-            Add a field to the anonymous class.
-
-            Args:
-                field_spec: The field to add
-
-            Returns:
-                self for chaining
-            """
             self.type_spec_builder.add_field(field_spec)
             return self
 
         def build(self) -> "TypeSpec":
-            """
-            Build the anonymous class.
-
-            Returns:
-                A new TypeSpec for the anonymous class
-            """
             type_spec = self.type_spec_builder.build()
             type_spec.anonymous_class_format = self.constructor_args_format
             type_spec.anonymous_class_args = self.constructor_args
@@ -126,25 +86,6 @@ class TypeSpec:
         enum_constants: Dict[str, "TypeSpec"],
         record_components: List[Tuple[TypeName, str]],
     ):
-        """
-        Initialize a new TypeSpec.
-
-        Args:
-            name: The type name
-            kind: The kind of type
-            modifiers: The type modifiers
-            type_variables: The type variables
-            superclass: The superclass
-            superinterfaces: The superinterfaces
-            permitted_subclasses: The permitted subclasses for sealed classes
-            javadoc: The type Javadoc
-            annotations: The type annotations
-            fields: The type fields
-            methods: The type methods
-            types: The nested types
-            enum_constants: The enum constants
-            record_components: The record components (type, name) for record classes
-        """
         self.name = name
         self.kind = kind
         self.modifiers = modifiers
@@ -165,12 +106,6 @@ class TypeSpec:
         self.anonymous_class_args = []
 
     def emit(self, code_writer) -> None:
-        """
-        Emit this type to a CodeWriter.
-
-        Args:
-            code_writer: The CodeWriter to emit to
-        """
         # Emit Javadoc
         if self.javadoc is not None:
             code_writer.emit("/**\n")
@@ -322,12 +257,6 @@ class TypeSpec:
         code_writer.emit("}")
 
     def __str__(self) -> str:
-        """
-        Get a string representation of this type.
-
-        Returns:
-            A string representation
-        """
         from pyjavapoet.code_writer import CodeWriter
 
         writer = CodeWriter()
@@ -336,94 +265,30 @@ class TypeSpec:
 
     @staticmethod
     def builder(name: str) -> "Builder":
-        """
-        Create a new TypeSpec builder for a class.
-
-        Args:
-            name: The class name
-
-        Returns:
-            A new Builder
-        """
         return TypeSpec.Builder(name, TypeSpec.Kind.CLASS)
 
     @staticmethod
     def class_builder(name: str) -> "Builder":
-        """
-        Create a new TypeSpec builder for a class.
-
-        Args:
-            name: The class name
-
-        Returns:
-            A new Builder
-        """
         return TypeSpec.Builder(name, TypeSpec.Kind.CLASS)
 
     @staticmethod
     def interface_builder(name: str) -> "Builder":
-        """
-        Create a new TypeSpec builder for an interface.
-
-        Args:
-            name: The interface name
-
-        Returns:
-            A new Builder
-        """
         return TypeSpec.Builder(name, TypeSpec.Kind.INTERFACE)
 
     @staticmethod
     def enum_builder(name: str) -> "Builder":
-        """
-        Create a new TypeSpec builder for an enum.
-
-        Args:
-            name: The enum name
-
-        Returns:
-            A new Builder
-        """
         return TypeSpec.Builder(name, TypeSpec.Kind.ENUM)
 
     @staticmethod
     def annotation_builder(name: str) -> "Builder":
-        """
-        Create a new TypeSpec builder for an annotation.
-
-        Args:
-            name: The annotation name
-
-        Returns:
-            A new Builder
-        """
         return TypeSpec.Builder(name, TypeSpec.Kind.ANNOTATION)
 
     @staticmethod
     def record_builder(name: str) -> "Builder":
-        """
-        Create a new TypeSpec builder for a record.
-
-        Args:
-            name: The record name
-
-        Returns:
-            A new Builder
-        """
         return TypeSpec.Builder(name, TypeSpec.Kind.RECORD)
 
     @staticmethod
     def anonymous_class_builder(format_string: str, *args) -> "AnonymousClassBuilder":
-        """
-        Create a new TypeSpec builder for an anonymous class.
-
-        Args:
-            format_string: The format string for the constructor arguments
-            *args: The arguments to format with
-
-        Returns:
-            A new AnonymousClassBuilder
-        """
         from pyjavapoet.type_name import TypeName
 
         builder = TypeSpec.AnonymousClassBuilder(TypeName.OBJECT)
@@ -437,13 +302,6 @@ class TypeSpec:
         """
 
         def __init__(self, name: str, kind: "TypeSpec.Kind"):
-            """
-            Initialize a new Builder.
-
-            Args:
-                name: The type name
-                kind: The kind of type
-            """
             self.name = name
             self.kind = kind
             self.modifiers = set()
@@ -460,43 +318,16 @@ class TypeSpec:
             self.record_components = []
 
         def add_modifiers(self, *modifiers: Modifier) -> "TypeSpec.Builder":
-            """
-            Add modifiers to the type.
-
-            Args:
-                *modifiers: The modifiers to add
-
-            Returns:
-                self for chaining
-            """
             self.modifiers.update(modifiers)
             # Check if modifiers are valid for classes
             Modifier.check_class_modifiers(self.modifiers)
             return self
 
         def add_type_variable(self, type_variable: TypeVariableName) -> "TypeSpec.Builder":
-            """
-            Add a type variable to the type.
-
-            Args:
-                type_variable: The type variable to add
-
-            Returns:
-                self for chaining
-            """
             self.type_variables.append(type_variable)
             return self
 
         def superclass(self, superclass: Union["TypeName", str, type]) -> "TypeSpec.Builder":
-            """
-            Set the superclass for the type.
-
-            Args:
-                superclass: The superclass
-
-            Returns:
-                self for chaining
-            """
             if self.kind == TypeSpec.Kind.INTERFACE or self.kind == TypeSpec.Kind.ANNOTATION:
                 raise ValueError("Interfaces and annotations cannot have a superclass")
 
@@ -507,15 +338,6 @@ class TypeSpec:
             return self
 
         def add_superinterface(self, superinterface: Union["TypeName", str, type]) -> "TypeSpec.Builder":
-            """
-            Add a superinterface to the type.
-
-            Args:
-                superinterface: The superinterface
-
-            Returns:
-                self for chaining
-            """
             if not isinstance(superinterface, TypeName):
                 superinterface = TypeName.get(superinterface)
 
@@ -523,15 +345,6 @@ class TypeSpec:
             return self
 
         def add_permitted_subclass(self, subclass: Union["TypeName", str, type]) -> "TypeSpec.Builder":
-            """
-            Add a permitted subclass to the type (for sealed classes).
-
-            Args:
-                subclass: The permitted subclass
-
-            Returns:
-                self for chaining
-            """
             if not isinstance(subclass, TypeName):
                 subclass = TypeName.get(subclass)
 
@@ -539,55 +352,18 @@ class TypeSpec:
             return self
 
         def add_javadoc(self, format_string: str, *args) -> "TypeSpec.Builder":
-            """
-            Add Javadoc to the type.
-
-            Args:
-                format_string: The format string
-                *args: The arguments to format with
-
-            Returns:
-                self for chaining
-            """
             self.javadoc = CodeBlock.of(format_string, *args)
             return self
 
         def add_annotation(self, annotation_spec: AnnotationSpec) -> "TypeSpec.Builder":
-            """
-            Add an annotation to the type.
-
-            Args:
-                annotation_spec: The annotation to add
-
-            Returns:
-                self for chaining
-            """
             self.annotations.append(annotation_spec)
             return self
 
         def add_field(self, field_spec: FieldSpec) -> "TypeSpec.Builder":
-            """
-            Add a field to the type.
-
-            Args:
-                field_spec: The field to add
-
-            Returns:
-                self for chaining
-            """
             self.fields.append(field_spec)
             return self
 
         def add_method(self, method_spec: MethodSpec) -> "TypeSpec.Builder":
-            """
-            Add a method to the type.
-
-            Args:
-                method_spec: The method to add
-
-            Returns:
-                self for chaining
-            """
             # Set constructor name to class name
             if (
                 method_spec.kind == MethodSpec.Kind.CONSTRUCTOR
@@ -605,28 +381,10 @@ class TypeSpec:
             return self
 
         def add_type(self, type_spec: "TypeSpec") -> "TypeSpec.Builder":
-            """
-            Add a nested type to the type.
-
-            Args:
-                type_spec: The nested type to add
-
-            Returns:
-                self for chaining
-            """
             self.types.append(type_spec)
             return self
 
         def add_enum_constant(self, name: str) -> "TypeSpec.Builder":
-            """
-            Add an enum constant to the enum.
-
-            Args:
-                name: The constant name
-
-            Returns:
-                self for chaining
-            """
             if self.kind != TypeSpec.Kind.ENUM:
                 raise ValueError("Enum constants can only be added to enums")
 
@@ -637,16 +395,6 @@ class TypeSpec:
             return self
 
         def add_enum_constant_with_class_body(self, name: str, type_spec: "TypeSpec") -> "TypeSpec.Builder":
-            """
-            Add an enum constant with a class body to the enum.
-
-            Args:
-                name: The constant name
-                type_spec: The class body
-
-            Returns:
-                self for chaining
-            """
             if self.kind != TypeSpec.Kind.ENUM:
                 raise ValueError("Enum constants can only be added to enums")
 
@@ -654,16 +402,6 @@ class TypeSpec:
             return self
 
         def add_record_component(self, type_name: Union["TypeName", str, type], name: str) -> "TypeSpec.Builder":
-            """
-            Add a record component to the record.
-
-            Args:
-                type_name: The component type
-                name: The component name
-
-            Returns:
-                self for chaining
-            """
             if self.kind != TypeSpec.Kind.RECORD:
                 raise ValueError("Record components can only be added to records")
 
@@ -674,13 +412,6 @@ class TypeSpec:
             return self
 
         def build(self) -> "TypeSpec":
-            """
-            Build a new TypeSpec.
-
-            Returns:
-                A new TypeSpec
-            """
-
             # Default superclass for enums
             if self.kind == TypeSpec.Kind.ENUM and self.superclass is None:
                 self.superclass = ClassName.get("java.lang", "Enum").parameterized(ClassName.get("", self.name))

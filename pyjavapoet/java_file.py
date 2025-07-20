@@ -31,17 +31,6 @@ class JavaFile:
         indent: str,
         static_imports: Dict[ClassName, Set[str]],
     ):
-        """
-        Initialize a new JavaFile.
-
-        Args:
-            package_name: The package name
-            type_spec: The type to emit
-            file_comment: The file comment
-            skip_java_lang_imports: Whether to skip java.lang imports
-            indent: The indentation string
-            static_imports: The static imports (class -> set of static members)
-        """
         self.package_name = package_name
         self.type_spec = type_spec
         self.file_comment = file_comment
@@ -50,12 +39,6 @@ class JavaFile:
         self.static_imports = static_imports
 
     def write_to(self, out: Union[str, TextIO, None] = None) -> None:
-        """
-        Write this Java file to the specified output.
-
-        Args:
-            out: The output (file path, file-like object, or None for stdout)
-        """
         if out is None:
             # Write to stdout
             self.emit_to(sys.stdout)
@@ -69,12 +52,6 @@ class JavaFile:
             self.emit_to(out)
 
     def emit_to(self, out: TextIO) -> None:
-        """
-        Emit this Java file to the specified output.
-
-        Args:
-            out: The output file-like object
-        """
         # Create a CodeWriter for generating the file
         writer = CodeWriter(indent=self.indent)
 
@@ -85,12 +62,6 @@ class JavaFile:
         out.write(str(writer))
 
     def emit_file(self, code_writer: CodeWriter) -> None:
-        """
-        Emit this Java file to a CodeWriter.
-
-        Args:
-            code_writer: The CodeWriter to emit to
-        """
         # Emit file comment
         if self.file_comment is not None:
             code_writer.emit("/**\n")
@@ -141,12 +112,6 @@ class JavaFile:
         code_writer.emit("\n")
 
     def __str__(self) -> str:
-        """
-        Get a string representation of this Java file.
-
-        Returns:
-            A string representation
-        """
         from io import StringIO
 
         out = StringIO()
@@ -155,16 +120,6 @@ class JavaFile:
 
     @staticmethod
     def builder(package_name: str, type_spec: TypeSpec) -> "Builder":
-        """
-        Create a new JavaFile builder.
-
-        Args:
-            package_name: The package name
-            type_spec: The type to emit
-
-        Returns:
-            A new Builder
-        """
         return JavaFile.Builder(package_name, type_spec)
 
     class Builder:
@@ -173,13 +128,6 @@ class JavaFile:
         """
 
         def __init__(self, package_name: str, type_spec: TypeSpec):
-            """
-            Initialize a new Builder.
-
-            Args:
-                package_name: The package name
-                type_spec: The type to emit
-            """
             self.package_name = package_name
             self.type_spec = type_spec
             self.file_comment = None
@@ -188,56 +136,18 @@ class JavaFile:
             self.static_imports = {}  # ClassName -> set of static members
 
         def add_file_comment(self, format_string: str, *args) -> "JavaFile.Builder":
-            """
-            Add a file comment.
-
-            Args:
-                format_string: The format string
-                *args: The arguments to format with
-
-            Returns:
-                self for chaining
-            """
             self.file_comment = CodeBlock.of(format_string, *args)
             return self
 
         def skip_java_lang_imports(self, skip: bool = True) -> "JavaFile.Builder":
-            """
-            Set whether to skip java.lang imports.
-
-            Args:
-                skip: Whether to skip java.lang imports
-
-            Returns:
-                self for chaining
-            """
             self.skip_java_lang_imports = skip
             return self
 
         def indent(self, indent: str) -> "JavaFile.Builder":
-            """
-            Set the indentation string.
-
-            Args:
-                indent: The indentation string
-
-            Returns:
-                self for chaining
-            """
             self.indent = indent
             return self
 
         def add_static_import(self, constant_class: Union[ClassName, str], constant_name: str) -> "JavaFile.Builder":
-            """
-            Add a static import.
-
-            Args:
-                constant_class: The class containing the constant
-                constant_name: The constant name
-
-            Returns:
-                self for chaining
-            """
             if isinstance(constant_class, str):
                 constant_class = ClassName.get_from_fqcn(constant_class)
 
@@ -252,12 +162,6 @@ class JavaFile:
             return self
 
         def build(self) -> "JavaFile":
-            """
-            Build a new JavaFile.
-
-            Returns:
-                A new JavaFile
-            """
             return JavaFile(
                 self.package_name,
                 self.type_spec,

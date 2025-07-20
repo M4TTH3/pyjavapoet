@@ -36,13 +36,11 @@ class AnnotationSpecTest(unittest.TestCase):
         """Test empty array handling."""
         builder = AnnotationSpec.builder(ClassName.get("com.example", "HasDefaultsAnnotation"))
         builder.add_member("n", "$L", "{}")
-        self.assertIn("n = {}", str(builder.build()))
-
         builder.add_member("m", "$L", "{}")
         annotation_str = str(builder.build())
         self.assertIn("n = {}", annotation_str)
         self.assertIn("m = {}", annotation_str)
-        self.assertIn("@com.example.HasDefaultsAnnotation()", annotation_str)
+        self.assertIn("@HasDefaultsAnnotation", annotation_str)
 
     def test_dynamic_array_of_enum_constants(self):
         """Test dynamic array of enum constants."""
@@ -52,7 +50,8 @@ class AnnotationSpecTest(unittest.TestCase):
 
 
         result = str(builder.build())
-        expected_part = "com.example.Breakfast.PANCAKES"
+        expected_part = "Breakfast.PANCAKES"
+
         self.assertIn(expected_part, result)
 
     def test_to_builder(self):

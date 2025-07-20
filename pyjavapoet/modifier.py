@@ -34,15 +34,6 @@ class Modifier(Enum):
 
     @staticmethod
     def check_method_modifiers(modifiers):
-        """
-        Checks if the provided modifiers are valid for methods.
-
-        Args:
-            modifiers: A list of modifiers to check
-
-        Raises:
-            ValueError: If there are invalid or conflicting modifiers
-        """
         # Check for invalid combinations
         if Modifier.ABSTRACT in modifiers and Modifier.FINAL in modifiers:
             raise ValueError("Method cannot be both abstract and final")
@@ -55,30 +46,12 @@ class Modifier(Enum):
 
     @staticmethod
     def check_field_modifiers(modifiers):
-        """
-        Checks if the provided modifiers are valid for fields.
-
-        Args:
-            modifiers: A list of modifiers to check
-
-        Raises:
-            ValueError: If there are invalid or conflicting modifiers
-        """
         # Check for invalid combinations
         if Modifier.FINAL in modifiers and Modifier.VOLATILE in modifiers:
             raise ValueError("Field cannot be both final and volatile")
 
     @staticmethod
     def check_class_modifiers(modifiers):
-        """
-        Checks if the provided modifiers are valid for classes.
-
-        Args:
-            modifiers: A list of modifiers to check
-
-        Raises:
-            ValueError: If there are invalid or conflicting modifiers
-        """
         # Check for invalid combinations
         if Modifier.ABSTRACT in modifiers and Modifier.FINAL in modifiers:
             raise ValueError("Class cannot be both abstract and final")
