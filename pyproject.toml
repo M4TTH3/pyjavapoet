@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyjavapoet"
+version = "0.1.0"
+authors = [
+    {name = "Matthew Au-Yeung", email = "matthew.au-yeung@mechanical-orchard.com"},
+]
+description = "A Python API for generating Java source files"
+readme = "README.md"
+requires-python = ">=3.8"
+
+[dependency-groups]
+dev = [
+  {include-group = "lint"},
+  {include-group = "test"}
+]
+lint = [
+  "ruff"
+]
+test = [
+  "pytest"
+]
+
+[project.urls]
+"Homepage" = "https://github.com/mechanical-orchard/pyjavapoet"
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+ignore = []
+
+[tool.ruff.lint.isort]
+known-first-party = ["pyjavapoet"]
+lines-between-types = 0
+
+[tool.setuptools]
+package-dir = { "" = "pyjavapoet" }
+
+
+[tool.setuptools.package-data]
+# Add resources if required
+"pyjavapoet" = ["resources/**/*"]

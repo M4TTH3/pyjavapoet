@@ -1,6 +1,6 @@
-# PyPoet
+# PyJavaPoet
 
-`PyPoet` is a Python API for generating `.java` source files, inspired by [JavaPoet](https://github.com/palantir/javapoet).
+`PyJavaPoet` is a Python API for generating `.java` source files, inspired by [JavaPoet](https://github.com/palantir/javapoet).
 
 ## Overview
 
@@ -10,23 +10,21 @@ the need to write boilerplate while also keeping a single source of truth for th
 
 ## Installation
 
-```bash
-pip install pypoet
-```
+TODO
 
 ## Example
 
-Here's how to generate a simple "HelloWorld" Java class using PyPoet:
+Here's how to generate a simple "HelloWorld" Java class using PyJavaPoet:
 
 ```python
-from pypoet import MethodSpec, TypeSpec, JavaFile, Modifier
+from pyjavapoet import MethodSpec, TypeSpec, JavaFile, Modifier
 
 # Create the main method
 main = MethodSpec.method_builder("main") \
     .add_modifiers(Modifier.PUBLIC, Modifier.STATIC) \
     .returns("void") \
     .add_parameter("String[]", "args") \
-    .add_statement('$T.out.println($S)', "System", "Hello, PyPoet!") \
+    .add_statement('$T.out.println($S)', "System", "Hello, PyJavaPoet!") \
     .build()
 
 # Create the HelloWorld class
@@ -50,7 +48,7 @@ package com.example.helloworld;
 
 public final class HelloWorld {
   public static void main(String[] args) {
-    System.out.println("Hello, PyPoet!");
+    System.out.println("Hello, PyJavaPoet!");
   }
 }
 ```
@@ -62,7 +60,3 @@ public final class HelloWorld {
 - Support for modifiers, annotations, and Javadoc
 - Proper handling of imports and type references
 - Formatted output with proper indentation and line breaks
-
-## License
-
-MIT License
