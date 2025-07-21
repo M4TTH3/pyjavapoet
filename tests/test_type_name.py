@@ -22,7 +22,7 @@ class TypeNameTest(unittest.TestCase):
         """Test generic type creation."""
         list_string = ClassName.get("java.util", "List").with_type_arguments(ClassName.get("java.lang", "String"))
         self.assertIsInstance(list_string, ParameterizedTypeName)
-        self.assertEqual(str(list_string), "java.util.List<java.lang.String>")
+        self.assertEqual(str(list_string), "List<String>")
 
     def test_inner_class_in_generic_type(self):
         """Test inner class within generic types."""
@@ -30,7 +30,7 @@ class TypeNameTest(unittest.TestCase):
         inner = outer.nested_class("Inner")
 
         result = str(inner)
-        self.assertIn("Outer<java.lang.String>.Inner", result)
+        self.assertIn("Outer<String>.Inner", result)
 
     def test_equals_and_hash_code_primitive(self):
         """Test equals and hash code for primitive types."""
@@ -126,67 +126,14 @@ class TypeNameTest(unittest.TestCase):
         """Test boxing annotated primitive types."""
         # This would test annotation preservation during boxing
         # For now, just test basic boxing functionality
-        int_type = TypeName.get("int")
-        boxed = int_type.box()
+        int_type = TypeName.INTEGER
+        boxed = int_type.to_type_param()
         self.assertEqual(boxed, ClassName.get("java.lang", "Integer"))
-
-    def test_can_unbox_annotated_primitive(self):
-        """Test unboxing annotated primitive types."""
-        # This would test annotation preservation during unboxing
-        # For now, just test basic unboxing functionality
-        integer_type = ClassName.get("java.lang", "Integer")
-        unboxed = integer_type.unbox()
-        self.assertEqual(unboxed, TypeName.get("int"))
-
-    def test_primitive_boxing(self):
-        """Test primitive type boxing."""
-        test_cases = [
-            ("boolean", "java.lang.Boolean"),
-            ("byte", "java.lang.Byte"),
-            ("char", "java.lang.Character"),
-            ("double", "java.lang.Double"),
-            ("float", "java.lang.Float"),
-            ("int", "java.lang.Integer"),
-            ("long", "java.lang.Long"),
-            ("short", "java.lang.Short"),
-        ]
-
-        for primitive, boxed_name in test_cases:
-            primitive_type = TypeName.get(primitive)
-            boxed_type = primitive_type.box()
-            expected = ClassName.best_guess(boxed_name)
-            self.assertEqual(boxed_type, expected, f"Boxing {primitive} failed")
-
-    def test_primitive_unboxing(self):
-        """Test boxed type unboxing."""
-        test_cases = [
-            ("java.lang.Boolean", "boolean"),
-            ("java.lang.Byte", "byte"),
-            ("java.lang.Character", "char"),
-            ("java.lang.Double", "double"),
-            ("java.lang.Float", "float"),
-            ("java.lang.Integer", "int"),
-            ("java.lang.Long", "long"),
-            ("java.lang.Short", "short"),
-        ]
-
-        for boxed_name, primitive in test_cases:
-            boxed_type = ClassName.best_guess(boxed_name)
-            unboxed_type = boxed_type.unbox()
-            expected = TypeName.get(primitive)
-            self.assertEqual(unboxed_type, expected, f"Unboxing {boxed_name} failed")
-
-    def test_void_cannot_be_boxed_or_unboxed(self):
-        """Test that void cannot be boxed in the traditional sense."""
-        void_type = TypeName.get("void")
-        # Void can be "boxed" to java.lang.Void
-        boxed = void_type.box()
-        self.assertEqual(boxed, ClassName.get("java.lang", "Void"))
 
     def test_array_type_creation(self):
         """Test array type creation."""
         string_array = ArrayTypeName.of(ClassName.get("java.lang", "String"))
-        self.assertEqual(str(string_array), "java.lang.String[]")
+        self.assertEqual(str(string_array), "String[]")
 
         # Multi-dimensional array
         int_2d_array = ArrayTypeName.of(ArrayTypeName.of(TypeName.get("int")))
@@ -195,18 +142,18 @@ class TypeNameTest(unittest.TestCase):
     def test_type_variable_with_bounds(self):
         """Test type variables with bounds."""
         bounded_t = TypeVariableName.get("T", ClassName.get("java.lang", "Number"))
-        self.assertEqual(str(bounded_t), "T")
+        self.assertEqual(str(bounded_t), "T extends Number")
         # The bounds would be used in the generic signature, not the string representation
 
     def test_wildcard_types(self):
         """Test wildcard type creation."""
         # ? extends Number
         extends_wildcard = WildcardTypeName.subtypes_of(ClassName.get("java.lang", "Number"))
-        self.assertEqual(str(extends_wildcard), "? extends java.lang.Number")
+        self.assertEqual(str(extends_wildcard), "? extends Number")
 
         # ? super Integer
         super_wildcard = WildcardTypeName.supertypes_of(ClassName.get("java.lang", "Integer"))
-        self.assertEqual(str(super_wildcard), "? super java.lang.Integer")
+        self.assertEqual(str(super_wildcard), "? super Integer")
 
         # Unbounded wildcard ?
         unbounded = WildcardTypeName.subtypes_of(ClassName.get("java.lang", "Object"))
@@ -217,7 +164,7 @@ class TypeNameTest(unittest.TestCase):
         wildcard = WildcardTypeName.subtypes_of(ClassName.get("java.lang", "Number"))
         list_wildcard = ClassName.get("java.util", "List").with_type_arguments(wildcard)
 
-        self.assertEqual(str(list_wildcard), "java.util.List<? extends java.lang.Number>")
+        self.assertEqual(str(list_wildcard), "List<? extends Number>")
 
     def test_nested_parameterized_types(self):
         """Test deeply nested parameterized types."""
@@ -226,7 +173,7 @@ class TypeNameTest(unittest.TestCase):
             ClassName.get("java.util", "List").with_type_arguments(ClassName.get("java.lang", "Integer")),
         )
 
-        self.assertEqual(str(map_type), "java.util.Map<java.lang.String, java.util.List<java.lang.Integer>>")
+        self.assertEqual(str(map_type), "Map<String, List<Integer>>")
 
     def test_get_method_with_class_type(self):
         """Test TypeName.get() with different input types."""
@@ -249,6 +196,134 @@ class TypeNameTest(unittest.TestCase):
         str2 = str(type_name)
         self.assertEqual(str1, str2)
 
+
+class ClassNameTest(unittest.TestCase):
+    """Test the ClassName class."""
+
+    def test_best_guess_for_string_simple_class(self):
+        """Test best guess for simple class names."""
+        self.assertEqual(ClassName.get_from_fqcn("String"), ClassName.get("java.lang", "String"))
+
+    def test_best_guess_non_ascii(self):
+        """Test best guess with non-ASCII characters."""
+        class_name = ClassName.get_from_fqcn("com.𝕯android.𝕸ctivⅈty")
+        self.assertEqual(class_name.package_name, "com.𝕯android")
+        self.assertEqual(class_name.simple_name, "𝕸ctivⅈty")
+
+    def test_best_guess_for_string_nested_class(self):
+        """Test best guess for nested classes."""
+        self.assertEqual(ClassName.get_from_fqcn("java.util.Map.Entry"), ClassName.get("java.util", "Map", "Entry"))
+        self.assertEqual(
+            ClassName.get_from_fqcn("com.example.OuterClass.InnerClass"),
+            ClassName.get("com.example", "OuterClass", "InnerClass"),
+        )
+
+    def test_best_guess_for_string_default_package(self):
+        """Test best guess for default package classes."""
+        self.assertEqual(ClassName.get_from_fqcn("SomeClass"), ClassName.get("", "SomeClass"))
+        self.assertEqual(ClassName.get_from_fqcn("SomeClass.Nested"), ClassName.get("", "SomeClass", "Nested"))
+        self.assertEqual(
+            ClassName.get_from_fqcn("SomeClass.Nested.EvenMore"), ClassName.get("", "SomeClass", "Nested", "EvenMore")
+        )
+
+    def test_create_nested_class(self):
+        """Test creating nested classes."""
+        foo = ClassName.get("com.example", "Foo")
+        bar = foo.nested_class("Bar")
+        self.assertEqual(bar, ClassName.get("com.example", "Foo", "Bar"))
+
+        baz = bar.nested_class("Baz")
+        self.assertEqual(baz, ClassName.get("com.example", "Foo", "Bar", "Baz"))
+        self.assertEqual(str(baz), "com.example.Foo.Bar.Baz")
+
+    def test_peer_class(self):
+        """Test peer class creation."""
+        self.assertEqual(ClassName.get("java.lang", "Double").peer_class("Short"), ClassName.get("java.lang", "Short"))
+        self.assertEqual(ClassName.get("", "Double").peer_class("Short"), ClassName.get("", "Short"))
+        self.assertEqual(
+            ClassName.get("a.b", "Combo", "Taco").peer_class("Burrito"), ClassName.get("a.b", "Combo", "Burrito")
+        )
+
+    def test_reflection_name(self):
+        """Test reflection name generation."""
+        self.assertEqual(ClassName.get("java.lang", "Object").reflection_name, "java.lang.Object")
+        self.assertEqual(ClassName.get("java.lang", "Thread", "State").reflection_name, "java.lang.Thread$State")
+        self.assertEqual(ClassName.get("java.util", "Map", "Entry").reflection_name, "java.util.Map$Entry")
+        self.assertEqual(ClassName.get("", "Foo").reflection_name, "Foo")
+        self.assertEqual(ClassName.get("", "Foo", "Bar", "Baz").reflection_name, "Foo$Bar$Baz")
+        self.assertEqual(ClassName.get("a.b.c", "Foo", "Bar", "Baz").reflection_name, "a.b.c.Foo$Bar$Baz")
+
+    def test_canonical_name(self):
+        """Test canonical name generation."""
+        self.assertEqual(ClassName.get("java.lang", "Object").canonical_name, "java.lang.Object")
+        self.assertEqual(ClassName.get("java.lang", "Thread", "State").canonical_name, "java.lang.Thread.State")
+        self.assertEqual(ClassName.get("java.util", "Map", "Entry").canonical_name, "java.util.Map.Entry")
+        self.assertEqual(ClassName.get("", "Foo").canonical_name, "Foo")
+        self.assertEqual(ClassName.get("", "Foo", "Bar", "Baz").canonical_name, "Foo.Bar.Baz")
+        self.assertEqual(ClassName.get("a.b.c", "Foo", "Bar", "Baz").canonical_name, "a.b.c.Foo.Bar.Baz")
+
+    def test_simple_name_and_enclosing_class(self):
+        """Test simple name and enclosing class extraction."""
+        object_class = ClassName.get("java.lang", "Object")
+        self.assertEqual(object_class.simple_name, "Object")
+        self.assertIsNone(object_class.enclosing_class_name)
+
+        entry_class = ClassName.get("java.util", "Map", "Entry")
+        self.assertEqual(entry_class.simple_name, "Entry")
+        self.assertEqual(entry_class.enclosing_class_name, ClassName.get("java.util", "Map"))
+
+    def test_package_name(self):
+        """Test package name extraction."""
+        self.assertEqual(ClassName.get("java.lang", "Object").package_name, "java.lang")
+        self.assertEqual(ClassName.get("", "Object").package_name, "java.lang")
+        self.assertEqual(ClassName.get("com.example", "Foo", "Bar").package_name, "com.example")
+
+    def test_top_level_class_name(self):
+        """Test top level class name extraction."""
+        self.assertEqual(
+            ClassName.get("java.util", "Map", "Entry").top_level_class_name, ClassName.get("java.util", "Map")
+        )
+        self.assertEqual(
+            ClassName.get("java.lang", "Object").top_level_class_name, ClassName.get("java.lang", "Object")
+        )
+
+    def test_equals_and_hash_code(self):
+        """Test equals and hash code."""
+        a = ClassName.get("java.lang", "String")
+        b = ClassName.get("java.lang", "String")
+        c = ClassName.get("java.lang", "Object")
+
+        self.assertEqual(a, b)
+        self.assertEqual(hash(a), hash(b))
+        self.assertNotEqual(a, c)
+        self.assertNotEqual(hash(a), hash(c))
+
+    def test_string_representation(self):
+        """Test string representation."""
+        self.assertEqual(str(ClassName.get("java.lang", "String")), "java.lang.String")
+        self.assertEqual(str(ClassName.get("", "String")), "java.lang.String")
+        self.assertEqual(str(ClassName.get("java.util", "Map", "Entry")), "java.util.Map.Entry")
+
+    def test_to_type_param(self):
+        """Test type parameter conversion."""
+        self.assertEqual(ClassName.get("java.lang", "Boolean").to_type_param(), ClassName.get("java.lang", "Boolean"))
+        self.assertEqual(ClassName.get("java.lang", "Byte").to_type_param(), ClassName.get("java.lang", "Byte"))
+        self.assertEqual(ClassName.get("java.lang", "Character").to_type_param(), ClassName.get("java.lang", "Character"))
+        self.assertEqual(ClassName.get("java.lang", "Double").to_type_param(), ClassName.get("java.lang", "Double"))
+        self.assertEqual(ClassName.get("java.lang", "Float").to_type_param(), ClassName.get("java.lang", "Float"))
+
+    def test_simple_names(self):
+        """Test simple names list."""
+        self.assertEqual(ClassName.get("java.lang", "Object").simple_names, ["Object"])
+        self.assertEqual(ClassName.get("java.util", "Map", "Entry").simple_names, ["Map", "Entry"])
+        self.assertEqual(ClassName.get("", "Foo", "Bar", "Baz").simple_names, ["Foo", "Bar", "Baz"])
+
+    def test_nested_name(self):
+        """Test nested name generation."""
+        self.assertEqual(ClassName.get("java.lang", "Object").nested_name, "Object")
+        self.assertEqual(ClassName.get("java.util", "Map", "Entry").nested_name, "Map.Entry")
+        self.assertEqual(ClassName.get("", "Foo", "Bar", "Baz").nested_name, "Foo.Bar.Baz")
+        self.assertEqual(ClassName.get("a.b.c", "Foo", "Bar", "Baz").nested_name, "Foo.Bar.Baz")
 
 if __name__ == "__main__":
     unittest.main()

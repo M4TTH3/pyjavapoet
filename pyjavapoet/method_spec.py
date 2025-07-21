@@ -127,12 +127,12 @@ class MethodSpec:
             code_writer.emit(";\n")
         else:
             code_writer.emit(" {\n")
-            code_writer.indent_more()
+            code_writer.indent()
 
             if self.code is not None:
                 self.code.emit(code_writer)
 
-            code_writer.indent_less()
+            code_writer.unindent()
             code_writer.emit("}\n")
 
     def __str__(self) -> str:

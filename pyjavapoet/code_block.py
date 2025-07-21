@@ -9,6 +9,8 @@ placeholders like $L (literals), $S (strings), $T (types), and $N (names).
 import re
 from typing import TYPE_CHECKING, Any, List
 
+from pyjavapoet.type_name import TypeName
+
 if TYPE_CHECKING:
     from pyjavapoet.code_writer import CodeWriter
 
@@ -27,7 +29,7 @@ class CodeBlock:
     def emit(self, code_writer: "CodeWriter") -> None:
         arg_index = 0
 
-        code_writer.indent_more()
+        code_writer.indent()
         for part in self.format_parts:
             # Look for placeholders like $L, $S, $T, $N
             placeholder_match = re.search(r"\$([LSTN])", part)
@@ -59,7 +61,8 @@ class CodeBlock:
 
                     elif placeholder_type == "T":  # Type
                         # Let the CodeWriter handle type imports
-                        code_writer.emit_type(arg)
+                        arg = TypeName.get(arg)
+                        arg.emit(code_writer)
 
                     elif placeholder_type == "N":  # Name
                         if hasattr(arg, "name"):
@@ -74,7 +77,7 @@ class CodeBlock:
                 # No placeholders, emit the whole part
                 code_writer.emit(part)
 
-        code_writer.indent_less()
+            code_writer.unindent()
 
     def __str__(self) -> str:
         from pyjavapoet.code_writer import CodeWriter

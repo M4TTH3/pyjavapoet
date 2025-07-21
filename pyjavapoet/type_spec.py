@@ -14,6 +14,7 @@ from typing import Dict, List, Optional, Set, Tuple, Union
 
 from pyjavapoet.annotation_spec import AnnotationSpec
 from pyjavapoet.code_block import CodeBlock
+from pyjavapoet.code_writer import CodeWriter
 from pyjavapoet.field_spec import FieldSpec
 from pyjavapoet.method_spec import MethodSpec
 from pyjavapoet.modifier import Modifier
@@ -105,7 +106,7 @@ class TypeSpec:
         self.anonymous_class_format = ""
         self.anonymous_class_args = []
 
-    def emit(self, code_writer) -> None:
+    def emit(self, code_writer: "CodeWriter") -> None:
         # Emit Javadoc
         if self.javadoc is not None:
             code_writer.emit("/**\n")
@@ -185,7 +186,7 @@ class TypeSpec:
                 code_writer.emit_type(subclass)
 
         code_writer.emit(" {\n")
-        code_writer.indent_more()
+        code_writer.indent()
 
         # Emit enum constants
         if self.kind == TypeSpec.Kind.ENUM and self.enum_constants:
@@ -212,7 +213,7 @@ class TypeSpec:
 
                     # Emit class body
                     code_writer.emit(" {\n")
-                    code_writer.indent_more()
+                    code_writer.indent()
 
                     # Emit fields
                     for field in constant.fields:
@@ -224,7 +225,7 @@ class TypeSpec:
                         method.emit(code_writer)
                         code_writer.emit("\n")
 
-                    code_writer.indent_less()
+                    code_writer.unindent()
                     code_writer.emit("}")
 
             if self.fields or self.methods or self.types:
@@ -253,7 +254,7 @@ class TypeSpec:
             type_spec.emit(code_writer)
             code_writer.emit("\n")
 
-        code_writer.indent_less()
+        code_writer.unindent()
         code_writer.emit("}")
 
     def __str__(self) -> str:
