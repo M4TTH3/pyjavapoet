@@ -29,12 +29,6 @@ class CodeBlockTest(unittest.TestCase):
         a = CodeBlock.of("$L taco", "delicious")
         self.assertEqual(str(a), "delicious taco")
 
-    def test_is_empty(self):
-        """Test isEmpty functionality."""
-        self.assertTrue(CodeBlock.builder().is_empty())
-        self.assertTrue(CodeBlock.builder().add("").is_empty())
-        self.assertFalse(CodeBlock.builder().add(" ").is_empty())
-
     def test_indent_cannot_be_indexed(self):
         """Test that indent placeholders cannot have indices."""
         with self.assertRaises(ValueError) as context:

@@ -23,7 +23,7 @@ class ClassTypesTest(unittest.TestCase):
         constant = (
             FieldSpec.builder(TypeName.STRING, "ONLY_THING_THAT_IS_CONSTANT")
             .add_modifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
-            .set_initializer("$S", "change")
+            .initializer("$S", "change")
             .build()
         )
 

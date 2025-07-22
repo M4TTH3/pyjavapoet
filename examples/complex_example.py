@@ -44,7 +44,7 @@ def main():
     counter_field = (
         FieldSpec.builder(TypeName.get("int"), "processCount")
         .add_modifiers(Modifier.PRIVATE)
-        .set_initializer("0")
+        .initializer("0")
         .build()
     )
 

@@ -33,6 +33,28 @@ class Modifier(Enum):
     NON_SEALED = "non-sealed"
 
     @staticmethod
+    def ordered_modifiers(modifiers: list["Modifier"]) -> list["Modifier"]:
+        # Java modifier order: public, protected, private, abstract, static, final, transient, volatile, synchronized, native, strictfp, sealed, non-sealed, default
+        order = [
+            Modifier.PUBLIC,
+            Modifier.PROTECTED,
+            Modifier.PRIVATE,
+            Modifier.ABSTRACT,
+            Modifier.STATIC,
+            Modifier.FINAL,
+            Modifier.TRANSIENT,
+            Modifier.VOLATILE,
+            Modifier.SYNCHRONIZED,
+            Modifier.NATIVE,
+            Modifier.STRICTFP,
+            Modifier.SEALED,
+            Modifier.NON_SEALED,
+            Modifier.DEFAULT,
+        ]
+        order_map = {mod: i for i, mod in enumerate(order)}
+        return sorted(modifiers, key=lambda x: order_map.get(x, 100))
+
+    @staticmethod
     def check_method_modifiers(modifiers):
         # Check for invalid combinations
         if Modifier.ABSTRACT in modifiers and Modifier.FINAL in modifiers:

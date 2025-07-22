@@ -29,7 +29,6 @@ class CodeBlock:
     def emit(self, code_writer: "CodeWriter") -> None:
         arg_index = 0
 
-        code_writer.indent()
         for part in self.format_parts:
             # Look for placeholders like $L, $S, $T, $N
             placeholder_match = re.search(r"\$([LSTN])", part)
@@ -77,14 +76,15 @@ class CodeBlock:
                 # No placeholders, emit the whole part
                 code_writer.emit(part)
 
-            code_writer.unindent()
-
     def __str__(self) -> str:
         from pyjavapoet.code_writer import CodeWriter
 
         writer = CodeWriter()
         self.emit(writer)
         return str(writer)
+
+    def copy(self) -> "CodeBlock":
+        return CodeBlock(self.format_parts.copy(), self.args.copy())
 
     @staticmethod
     def of(format_string: str, *args) -> "CodeBlock":
@@ -110,6 +110,14 @@ class CodeBlock:
             builder.add("$L", code_block)
 
         return builder.build()
+    
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, CodeBlock):
+            return False
+        return str(self) == str(other)
+    
+    def __hash__(self) -> int:
+        return hash(str(self))
 
     class Builder:
         """
