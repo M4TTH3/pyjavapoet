@@ -7,12 +7,10 @@ placeholders like $L (literals), $S (strings), $T (types), and $N (names).
 """
 
 import re
-from typing import TYPE_CHECKING, Any, List
+from typing import Any
 
+from pyjavapoet.code_writer import CodeWriter
 from pyjavapoet.type_name import TypeName
-
-if TYPE_CHECKING:
-    from pyjavapoet.code_writer import CodeWriter
 
 
 class CodeBlock:
@@ -21,87 +19,136 @@ class CodeBlock:
 
     CodeBlock instances are immutable. Use the builder to create new instances.
     """
+    format_parts: list[str]
+    args: list[Any]
+    named_args: dict[str, Any]
 
-    def __init__(self, format_parts: List[str], args: List[Any]):
+    # Matches:
+    #   $L, $S, $T, $N, $<, $>
+    #   $name:T, $name:L, $name:S, $name:N (named arguments)
+    #   $1L, $2S, $3T, etc. (indexed arguments)
+    placeholder_match = re.compile(
+        r"""
+        \$(
+            (?P<type1>[LSTN<>])                                 # $L, $S, $T, $N, $<, $>
+            |                                         # or
+            (?P<name>[a-zA-Z_][a-zA-Z0-9_]*)          # $name
+            :                                         # :
+            (?P<type2>[LSTN])                          # T, L, S, N
+            |                                         # or
+            (?P<index>\d+)                            # $1, $2, etc.
+            (?P<type3>[LSTN<>])                     # L, S, T, N, $<, $>
+        )
+        """,
+        re.VERBOSE,
+    )
+
+    def __init__(self, format_parts: list[str], args: list[Any], named_args: dict[str, Any]):
         self.format_parts = format_parts
         self.args = args
+        self.named_args = named_args
 
-    def emit(self, code_writer: "CodeWriter") -> None:
+    def emit(self, code_writer: "CodeWriter", new_line_prefix: str = "") -> None:
         arg_index = 0
 
         for part in self.format_parts:
             # Look for placeholders like $L, $S, $T, $N
-            placeholder_match = re.search(r"\$([LSTN])", part)
+            placeholder_match = re.search(CodeBlock.placeholder_match, part)
             if placeholder_match:
                 # Emit everything before the placeholder
                 if placeholder_match.start() > 0:
-                    code_writer.emit(part[: placeholder_match.start()])
+                    code_writer.emit(part[: placeholder_match.start()], new_line_prefix)
 
                 # Get the placeholder type
-                placeholder_type = placeholder_match.group(1)
+                placeholder_type = (
+                    placeholder_match.group("type1")
+                    or placeholder_match.group("type2")
+                    or placeholder_match.group("type3")
+                )
+                placeholder_index = placeholder_match.group("index")
+                placeholder_name = placeholder_match.group("name")
 
                 # Handle the placeholder
-                if arg_index < len(self.args):
-                    arg = self.args[arg_index]
-                    arg_index += 1
-
+                if placeholder_type == ">":  # Indent
+                    count = int(placeholder_index) if placeholder_index else 1
+                    code_writer.indent(count)
+                elif placeholder_type == "<":  # Unindent
+                    count = int(placeholder_index) if placeholder_index else 1
+                    code_writer.unindent(count)
+                elif arg_index < len(self.args) or placeholder_name or placeholder_index:
+                    if placeholder_name:
+                        if placeholder_name not in self.named_args:
+                            raise KeyError(f"No argument found for placeholder {placeholder_name}")
+                        arg = self.named_args[placeholder_name]
+                    elif placeholder_index:
+                        index = int(placeholder_index) - 1
+                        if index >= len(self.args):
+                            raise IndexError(f"No argument found for placeholder {placeholder_index}")
+                        arg = self.args[index]
+                    else:
+                        arg = self.args[arg_index]
+                        arg_index += 1
+                    
                     if placeholder_type == "L":  # Literal
                         if isinstance(arg, CodeBlock):
-                            arg.emit(code_writer)
+                            arg.emit(code_writer, new_line_prefix)
+                        elif isinstance(arg, bool):
+                            code_writer.emit(str(arg).lower())
                         else:
-                            code_writer.emit(str(arg))
-
+                            code_writer.emit(str(arg), new_line_prefix)
                     elif placeholder_type == "S":  # String
                         # Escape special characters
                         escaped = str(arg).replace("\\", "\\\\").replace('"', '\\"')
 
                         # Add quotes
-                        code_writer.emit(f'"{escaped}"')
-
+                        code_writer.emit(f'"{escaped}"', new_line_prefix)
                     elif placeholder_type == "T":  # Type
                         # Let the CodeWriter handle type imports
                         arg = TypeName.get(arg)
-                        arg.emit(code_writer)
-
+                        arg.emit(code_writer, new_line_prefix)
                     elif placeholder_type == "N":  # Name
-                        if hasattr(arg, "name"):
-                            code_writer.emit(arg.name)
-                        else:
-                            code_writer.emit(str(arg))
-
+                        code_writer.emit(str(arg), new_line_prefix)
+  
                 # Emit everything after the placeholder
                 if placeholder_match.end() < len(part):
-                    code_writer.emit(part[placeholder_match.end() :])
+                    code_writer.emit(part[placeholder_match.end() :], new_line_prefix)
             else:
                 # No placeholders, emit the whole part
-                code_writer.emit(part)
+                code_writer.emit(part, new_line_prefix)
+
+    def emit_javadoc(self, code_writer: "CodeWriter") -> None:
+        code_writer.emit("/**\n * ")
+        self.emit(code_writer, " * ")
+        code_writer.emit("\n */")
+
+    def javadoc(self) -> str:
+        writer = CodeWriter()
+        self.emit_javadoc(writer)
+        return str(writer)
 
     def __str__(self) -> str:
-        from pyjavapoet.code_writer import CodeWriter
-
         writer = CodeWriter()
         self.emit(writer)
         return str(writer)
 
     def copy(self) -> "CodeBlock":
-        return CodeBlock(self.format_parts.copy(), self.args.copy())
+        return CodeBlock(self.format_parts.copy(), self.args.copy(), self.named_args.copy())
 
     @staticmethod
-    def of(format_string: str, *args) -> "CodeBlock":
-        return CodeBlock.builder().add(format_string, *args).build()
+    def of(format_string: str, *args, **kwargs) -> "CodeBlock":
+        return CodeBlock.builder().add(format_string, *args, **kwargs).build()
 
     @staticmethod
     def builder() -> "Builder":
         return CodeBlock.Builder()
 
     @staticmethod
-    def join_to_code(code_blocks: List["CodeBlock"], separator: str) -> "CodeBlock":
-        if not code_blocks:
-            return CodeBlock([], [])
-
+    def join_to_code(code_blocks: list["CodeBlock"], separator: str) -> "CodeBlock":
         builder = CodeBlock.builder()
-        first = True
+        if not code_blocks:
+            return builder.build()
 
+        first = True
         for code_block in code_blocks:
             if not first:
                 builder.add(separator)
@@ -123,15 +170,18 @@ class CodeBlock:
         """
         Builder for CodeBlock instances.
         """
+        format_parts: list[str]
+        args: list[Any]
+        named_args: dict[str, Any]
 
         def __init__(self):
             self.format_parts = []
             self.args = []
+            self.named_args = {}
 
-        def add(self, format_string: str, *args) -> "CodeBlock.Builder":
+        def add(self, format_string: str, *args, **kwargs) -> "CodeBlock.Builder":
             # Check for arguments in the format string
-            pattern = r"\$([LSTN])"
-            matches = list(re.finditer(pattern, format_string))
+            matches = list(re.finditer(CodeBlock.placeholder_match, format_string))
 
             # Simple case: no arguments
             if not matches:
@@ -157,27 +207,36 @@ class CodeBlock:
             # Add the arguments
             self.args.extend(args)
 
+            # Add the named arguments
+            self.named_args.update(kwargs)
+
             return self
 
-        def add_statement(self, format_string: str, *args) -> "CodeBlock.Builder":
-            self.add(format_string, *args)
-            self.add(";\n")
+        def add_statement(self, format_string: str, *args, **kwargs) -> "CodeBlock.Builder":
+            parts = format_string.split("\n")
+            single_line = len(parts) == 1
+            if not single_line:
+                statement = f"{parts[0]}\n$2>{"\n".join(part for part in parts[1:])};\n$2<"
+                self.add(statement, *args, **kwargs)
+            else:
+                self.add(format_string, *args, **kwargs)
+                self.add(";\n")
             return self
 
-        def begin_control_flow(self, control_flow_string: str, *args) -> "CodeBlock.Builder":
-            self.add(control_flow_string, *args)
-            self.add(" {\n")
+        def begin_control_flow(self, control_flow_string: str, *args, **kwargs) -> "CodeBlock.Builder":
+            self.add(control_flow_string, *args, **kwargs)
+            self.add(" {\n$>")
             return self
 
-        def next_control_flow(self, control_flow_string: str, *args) -> "CodeBlock.Builder":
-            self.add("} ")
-            self.add(control_flow_string, *args)
-            self.add(" {\n")
+        def next_control_flow(self, control_flow_string: str, *args, **kwargs) -> "CodeBlock.Builder":
+            self.add("$<} ")
+            self.add(control_flow_string, *args, **kwargs)
+            self.add(" {\n$>")
             return self
 
         def end_control_flow(self) -> "CodeBlock.Builder":
-            self.add("}\n")
+            self.add("$<}\n")
             return self
 
         def build(self) -> "CodeBlock":
-            return CodeBlock(self.format_parts.copy(), self.args.copy())
+            return CodeBlock(self.format_parts.copy(), self.args.copy(), self.named_args.copy())

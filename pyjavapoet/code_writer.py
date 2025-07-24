@@ -32,14 +32,14 @@ class CodeWriter:
         # Imports tracking
         self.__imports = set()  # Set of imports that must be added
 
-    def indent(self) -> None:
-        self.__indent_level += 1
+    def indent(self, count: int = 1) -> None:
+        self.__indent_level += count
 
-    def unindent(self) -> None:
+    def unindent(self, count: int = 1) -> None:
         if self.__indent_level > 0:
-            self.__indent_level -= 1
+            self.__indent_level -= min(count, self.__indent_level)
 
-    def emit(self, s: str) -> "CodeWriter":
+    def emit(self, s: str, new_line_prefix: str = "") -> "CodeWriter":
         if s.startswith("\n"):
             # Reset line start
             self.__out.append("\n")
@@ -52,6 +52,7 @@ class CodeWriter:
         if self.__line_start:
             # Add indentation at start of line
             self.__out.append(self.__indent * self.__indent_level)
+            self.__out.append(new_line_prefix)
             self.__line_start = False
 
         # Split by newlines to handle indentation
@@ -59,7 +60,7 @@ class CodeWriter:
         for i, line in enumerate(lines):
             if i > 0:
                 # Emit newline and indentation
-                self.emit(f"\n{line}")
+                self.emit(f"\n{line}", new_line_prefix)
             else:
                 # Emit the line
                 self.__out.append(line)
