@@ -33,26 +33,3 @@ class Code[C: "Code"](ABC):
         @abstractmethod
         def build(self) -> T:
             ...
-
-class CodeImpl(Code["CodeImpl"]):
-    def __init__(self, code: str):
-        self.code = code
-
-    def emit(self, code_writer: "CodeWriter") -> None:
-        code_writer.emit(self.code)
-
-    def to_builder(self) -> "CodeImpl.Builder":
-        return CodeImpl.Builder()
-
-    def copy(self) -> "CodeImpl":
-        return CodeImpl(self.code)
-
-    class Builder(Code.Builder):
-        def __init__(self):
-            self.code = ""
-
-        def build(self) -> "CodeImpl":
-            return CodeImpl(self.code)
-        
-
-test_code = CodeImpl.Builder().build()

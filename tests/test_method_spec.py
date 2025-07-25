@@ -26,7 +26,7 @@ class MethodSpecTest(unittest.TestCase):
         )
 
         result = str(method)
-        self.assertEqual(result, "public String getName() {\n  return this.name;\n}\n")
+        self.assertEqual(result, "public String getName() {\n  return this.name;\n}")
 
     def test_method_with_parameters(self):
         """Test method with parameters."""
@@ -40,7 +40,7 @@ class MethodSpecTest(unittest.TestCase):
         )
 
         result = str(method)
-        self.assertEqual(result, "public void setName(String name) {\n  this.name = name;\n}\n")
+        self.assertEqual(result, "public void setName(String name) {\n  this.name = name;\n}")
 
     def test_method_with_javadoc(self):
         """Test method with javadoc."""
@@ -60,14 +60,15 @@ class MethodSpecTest(unittest.TestCase):
         result = str(method)
         print(result)
         self.assertIn(
-"""\
+            """\
 /**
  * Calculates the result.
  * 
  * @param input the input value
  * @return the calculated result
- */"""
-        , result)
+ */""",
+            result,
+        )
 
     def test_constructor_creation_and_set_name(self):
         """Test constructor creation."""
@@ -116,12 +117,13 @@ class MethodSpecTest(unittest.TestCase):
 
         result = str(method)
         self.assertEqual(
-"""\
+            """\
 public String readFile(String filename) throws IOException, SecurityException {
   // implementation
   return null;
-}"""
-        , result)
+}""",
+            result,
+        )
 
     def test_method_with_type_variables(self):
         """Test method with type variables."""
@@ -137,11 +139,10 @@ public String readFile(String filename) throws IOException, SecurityException {
         )
 
         result = str(method)
-        expected = (
-"""\
+        expected = """\
 public static <T> T identity(T input) {
   return input;
-}""")
+}"""
         self.assertEqual(expected, result)
 
     def test_method_with_bounded_type_variables(self):
@@ -158,7 +159,7 @@ public static <T> T identity(T input) {
         )
 
         result = str(method)
-        self.assertIn("<T extends java.lang.Number>", result)
+        self.assertIn("<T extends Number> void process(T number)", result)
 
     def test_static_method(self):
         """Test static method creation."""

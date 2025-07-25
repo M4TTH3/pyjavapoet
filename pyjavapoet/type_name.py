@@ -13,7 +13,7 @@ This module defines classes for representing Java types:
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Optional, Union
 
-from pyjavapoet.util import is_ascii_upper
+from pyjavapoet.util import deep_copy, is_ascii_upper
 
 if TYPE_CHECKING:
     from pyjavapoet.annotation_spec import AnnotationSpec
@@ -72,7 +72,7 @@ class TypeName(ABC):
         t: JAVA_LANG_PACKAGE for t in BOXED_PRIMITIVE_TYPES
     }
 
-    def __init__(self, annotations: list["AnnotationSpec"] = None):
+    def __init__(self, annotations: list["AnnotationSpec"] | None = None):
         self.annotations = annotations or []
 
     @abstractmethod
@@ -102,9 +102,6 @@ class TypeName(ABC):
     
     def __hash__(self) -> int:
         return hash(str(self))
-    
-    def with_type_arguments(self, *type_arguments: "TypeName") -> "ParameterizedTypeName":
-        return ParameterizedTypeName.get(self, *type_arguments)
     
     def is_primitive(self) -> bool:
         return (
@@ -161,7 +158,7 @@ class ClassName(TypeName):
     simple_names: list[str]
     ignore_package_name: bool
 
-    def __init__(self, package_name: str, simple_names: list[str], annotations: list["AnnotationSpec"] = None):
+    def __init__(self, package_name: str, simple_names: list[str], annotations: list["AnnotationSpec"] | None = None):
         super().__init__(annotations)
         if not simple_names:
             raise ValueError("simple_names cannot be empty")
@@ -180,13 +177,16 @@ class ClassName(TypeName):
         code_writer.emit_type(self)
 
     def copy(self) -> "ClassName":
-        return ClassName(self.package_name, self.simple_names.copy(), self.annotations.copy())
+        return ClassName(self.package_name, deep_copy(self.simple_names), deep_copy(self.annotations))
     
     def nested_class(self, *simple_names: str) -> "ClassName":
         return ClassName(self.package_name, self.simple_names + list(simple_names))
     
     def peer_class(self, *simple_names: str) -> "ClassName":
         return ClassName(self.package_name, self.simple_names[:-1] + list(simple_names))
+    
+    def with_type_arguments(self, *type_arguments: Union["TypeName", str, type]) -> "ParameterizedTypeName":
+        return ParameterizedTypeName(self, [TypeName.get(arg) for arg in type_arguments])
     
     def to_type_param(self) -> "TypeName":
         if self.is_primitive():
@@ -238,8 +238,9 @@ class ClassName(TypeName):
             else:
                 all_simple_names.append(simple_name)
 
-        if not package_name and len(simple_names) == 1 and simple_names[0] in TypeName.ALL_PRIMITIVE_TYPES:
-            package_name = TypeName.ALL_PRIMITIVE_TYPES[simple_names[0]]
+        if not package_name and len(simple_names) == 1:
+            if pkg_name := TypeName.ALL_PRIMITIVE_TYPES.get(simple_names[0]):
+                package_name = pkg_name
 
         return ClassName(package_name, all_simple_names)
 
@@ -270,7 +271,7 @@ class ArrayTypeName(TypeName):
     Represents an array type.
     """
 
-    def __init__(self, component_type: TypeName, annotations: list["AnnotationSpec"] = None):
+    def __init__(self, component_type: TypeName, annotations: list["AnnotationSpec"] | None = None):
         super().__init__(annotations)
         self.component_type = component_type
 
@@ -287,7 +288,7 @@ class ArrayTypeName(TypeName):
         code_writer.emit("[]")
 
     def copy(self) -> "ArrayTypeName":
-        return ArrayTypeName(self.component_type.copy(), self.annotations.copy())
+        return ArrayTypeName(deep_copy(self.component_type), deep_copy(self.annotations))
 
     @staticmethod
     def of(component_type: Union["TypeName", str, type]) -> "ArrayTypeName":
@@ -303,7 +304,7 @@ class ParameterizedTypeName(TypeName):
         raw_type: ClassName,
         type_arguments: list[TypeName],
         owner_type: Optional["ParameterizedTypeName"] = None,
-        annotations: list["AnnotationSpec"] = None,
+        annotations: list["AnnotationSpec"] | None = None,
     ):
         super().__init__(annotations)
         self.raw_type = raw_type
@@ -334,10 +335,10 @@ class ParameterizedTypeName(TypeName):
 
     def copy(self) -> "ParameterizedTypeName":
         return ParameterizedTypeName(
-            self.raw_type.copy(),
-            [arg.copy() for arg in self.type_arguments],
-            self.owner_type.copy() if self.owner_type else None,
-            self.annotations.copy(),
+            deep_copy(self.raw_type),
+            deep_copy(self.type_arguments),
+            deep_copy(self.owner_type),
+            deep_copy(self.annotations),
         )
     
     def nested_class(self, *simple_names: str) -> "ParameterizedTypeName":
@@ -364,7 +365,12 @@ class TypeVariableName(TypeName):
     Represents a type variable like T in List<T>.
     """
 
-    def __init__(self, name: str, bounds: list[TypeName] = None, annotations: list["AnnotationSpec"] = None):
+    def __init__(
+        self,
+        name: str,
+        bounds: list[TypeName] | None = None,
+        annotations: list["AnnotationSpec"] | None = None,
+    ):
         super().__init__(annotations)
         self.name = name
         self.bounds = bounds or []
@@ -387,7 +393,7 @@ class TypeVariableName(TypeName):
                 bound.emit(code_writer)
 
     def copy(self) -> "TypeVariableName":
-        return TypeVariableName(self.name, [bound.copy() for bound in self.bounds], self.annotations.copy())
+        return TypeVariableName(self.name, deep_copy(self.bounds), deep_copy(self.annotations))
 
     @staticmethod
     def get(name: str, *bounds: Union["TypeName", str, type]) -> "TypeVariableName":
@@ -401,9 +407,9 @@ class WildcardTypeName(TypeName):
 
     def __init__(
         self,
-        upper_bounds: list[TypeName] = None,
-        lower_bounds: list[TypeName] = None,
-        annotations: list["AnnotationSpec"] = None,
+        upper_bounds: list[TypeName] | None = None,
+        lower_bounds: list[TypeName] | None = None,
+        annotations: list["AnnotationSpec"] | None = None,
     ):
         super().__init__(annotations)
         self.upper_bounds = upper_bounds or [TypeName.OBJECT]
@@ -440,9 +446,9 @@ class WildcardTypeName(TypeName):
 
     def copy(self) -> "WildcardTypeName":
         return WildcardTypeName(
-            [bound.copy() for bound in self.upper_bounds],
-            [bound.copy() for bound in self.lower_bounds],
-            self.annotations.copy(),
+            deep_copy(self.upper_bounds),
+            deep_copy(self.lower_bounds),
+            deep_copy(self.annotations),
         )
 
     @staticmethod

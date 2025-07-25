@@ -8,6 +8,8 @@ methods and constructors in Java classes and interfaces.
 from enum import Enum, auto
 from typing import Optional, Union
 
+from util import deep_copy
+
 from pyjavapoet.annotation_spec import AnnotationSpec
 from pyjavapoet.code_block import CodeBlock
 from pyjavapoet.code_writer import EMPTY_STRING, CodeWriter
@@ -135,15 +137,15 @@ class MethodSpec:
         return MethodSpec.Builder(
             self.name,
             self.kind,
-            self.modifiers,
-            [p.copy() for p in self.parameters],
-            self.return_type.copy() if self.return_type else None,
-            [e.copy() for e in self.exceptions],
-            [t.copy() for t in self.type_variables],
-            self.javadoc.copy() if self.javadoc else None,
-            [a.copy() for a in self.annotations],
+            deep_copy(self.modifiers),
+            deep_copy(self.parameters),
+            deep_copy(self.return_type),
+            deep_copy(self.exceptions),
+            deep_copy(self.type_variables),
+            deep_copy(self.javadoc),
+            deep_copy(self.annotations),
             self.code.to_builder() if self.code else CodeBlock.builder(),
-            self.default_value.copy() if self.default_value else None,
+            deep_copy(self.default_value),
         )
     
     def copy(self) -> "MethodSpec":
@@ -190,26 +192,26 @@ class MethodSpec:
             self,
             name: str,
             kind: "MethodSpec.Kind",
-            modifiers: set[Modifier] = set(),
-            parameters: list["ParameterSpec"] = [],
+            modifiers: set[Modifier] | None = None,
+            parameters: list["ParameterSpec"] | None = None,
             return_type: Optional["TypeName"] = None,
-            exceptions: list["TypeName"] = [],
-            type_variables: list["TypeVariableName"] = [],
+            exceptions: list["TypeName"] | None = None,
+            type_variables: list["TypeVariableName"] | None = None,
             javadoc: Optional["CodeBlock"] = None,
-            annotations: list["AnnotationSpec"] = [],
-            code_builder: "CodeBlock.Builder" = CodeBlock.builder(),
+            annotations: list["AnnotationSpec"] | None = None,
+            code_builder: Optional["CodeBlock.Builder"] = None,
             default_value: Optional["CodeBlock"] = None,
         ):
             self.__name = name
             self.__kind = kind
-            self.__modifiers = modifiers
-            self.__parameters = parameters
+            self.__modifiers = modifiers or set()
+            self.__parameters = parameters or []
             self.__return_type = return_type
-            self.__exceptions = exceptions
-            self.__type_variables = type_variables
+            self.__exceptions = exceptions or []
+            self.__type_variables = type_variables or []
             self.__javadoc = javadoc
-            self.__annotations = annotations
-            self.__code_builder = code_builder
+            self.__annotations = annotations or []
+            self.__code_builder = code_builder or CodeBlock.builder()
             self.__default_value = default_value
 
         def add_modifiers(self, *modifiers: Modifier) -> "MethodSpec.Builder":
@@ -328,14 +330,14 @@ class MethodSpec:
 
             return MethodSpec(
                 self.__name,
-                self.__modifiers.copy(),
-                self.__parameters.copy(),
-                self.__return_type,
-                self.__exceptions.copy(),
-                self.__type_variables.copy(),
-                self.__javadoc,
-                self.__annotations.copy(),
+                deep_copy(self.__modifiers),
+                deep_copy(self.__parameters),
+                deep_copy(self.__return_type),
+                deep_copy(self.__exceptions),
+                deep_copy(self.__type_variables),
+                deep_copy(self.__javadoc),
+                deep_copy(self.__annotations),
                 self.__code_builder.build() if self.__code_builder else None,
-                self.__default_value,
-                self.__kind,
+                deep_copy(self.__default_value),
+                deep_copy(self.__kind),
             )

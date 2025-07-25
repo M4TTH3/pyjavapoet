@@ -8,6 +8,7 @@ Java annotations for classes, methods, fields, parameters, etc.
 from typing import Any, Union
 
 from code_base import Code
+from util import deep_copy
 
 from pyjavapoet.code_block import CodeBlock
 from pyjavapoet.code_writer import CodeWriter
@@ -67,8 +68,8 @@ class AnnotationSpec(Code["AnnotationSpec"]):
 
     def to_builder(self) -> "Builder":
         return AnnotationSpec.Builder(
-            self.type_name,
-            {name: [value.copy() for value in values] for name, values in self.members.items()}
+            deep_copy(self.type_name),
+            deep_copy(self.members)
         )
 
     @staticmethod
@@ -101,5 +102,4 @@ class AnnotationSpec(Code["AnnotationSpec"]):
 
         def build(self) -> "AnnotationSpec":
             # Create a deep copy of members
-            members_copy = {name: [value.copy() for value in values] for name, values in self.__members.items()}
-            return AnnotationSpec(self.__type_name.copy(), members_copy)
+            return AnnotationSpec(deep_copy(self.__type_name), deep_copy(self.__members))

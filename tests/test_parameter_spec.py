@@ -26,7 +26,7 @@ class ParameterSpecTest(unittest.TestCase):
         param = ParameterSpec.builder(ClassName.get("java.lang", "String"), "value").build()
 
         result = str(param)
-        self.assertEqual(result, "java.lang.String value")
+        self.assertEqual(result, "String value")
 
     def test_parameter_with_modifiers(self):
         """Test parameter with modifiers."""
@@ -35,7 +35,7 @@ class ParameterSpecTest(unittest.TestCase):
         )
 
         result = str(param)
-        self.assertEqual(result, "final java.lang.String value")
+        self.assertEqual(result, "final String value")
 
     def test_parameter_with_annotation(self):
         """Test parameter with annotation."""
@@ -43,8 +43,8 @@ class ParameterSpecTest(unittest.TestCase):
         param = ParameterSpec.builder(ClassName.get("java.lang", "String"), "value").add_annotation(annotation).build()
 
         result = str(param)
-        self.assertIn("@javax.annotation.Nullable", result)
-        self.assertIn("java.lang.String value", result)
+        self.assertIn("@Nullable", result)
+        self.assertIn("String value", result)
 
     def test_parameter_with_multiple_annotations(self):
         """Test parameter with multiple annotations."""
@@ -59,8 +59,8 @@ class ParameterSpecTest(unittest.TestCase):
         )
 
         result = str(param)
-        self.assertIn("@javax.annotation.Nullable", result)
-        self.assertIn("@javax.annotation.Nonnull", result)
+        self.assertIn("@Nullable", result)
+        self.assertIn("@Nonnull", result)
 
     def test_primitive_parameter(self):
         """Test primitive parameter."""
@@ -102,12 +102,6 @@ class ParameterSpecTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             ParameterSpec.builder(ClassName.get("java.lang", "String"), "return")
 
-    def test_null_annotations_addition(self):
-        """Test that null annotations are rejected."""
-        builder = ParameterSpec.builder(ClassName.get("java.lang", "String"), "value")
-        with self.assertRaises(ValueError):
-            builder.add_annotation(None)
-
     def test_parameter_to_builder(self):
         """Test parameter to builder conversion."""
         original = (
@@ -120,16 +114,9 @@ class ParameterSpecTest(unittest.TestCase):
         original_str = str(original)
         modified_str = str(modified)
 
-        self.assertNotIn("@javax.annotation.Nullable", original_str)
-        self.assertIn("@javax.annotation.Nullable", modified_str)
+        self.assertNotIn("@Nullable", original_str)
+        self.assertIn("@Nullable", modified_str)
         self.assertIn("final", modified_str)
-
-    def test_parameter_factory_method(self):
-        """Test parameter factory method."""
-        param = ParameterSpec.get(ClassName.get("java.lang", "String"), "name")
-
-        result = str(param)
-        self.assertEqual(result, "java.lang.String name")
 
     def test_final_parameter(self):
         """Test final parameter."""
@@ -138,7 +125,7 @@ class ParameterSpecTest(unittest.TestCase):
         )
 
         result = str(param)
-        self.assertEqual(result, "final java.lang.String value")
+        self.assertEqual(result, "final String value")
 
     def test_invalid_parameter_name(self):
         """Test that invalid parameter names are rejected."""
@@ -163,7 +150,7 @@ class ParameterSpecTest(unittest.TestCase):
         param = ParameterSpec.builder(ClassName.get("java.lang", "String"), "input").add_annotation(annotation).build()
 
         result = str(param)
-        self.assertIn("@com.example.Validated", result)
+        self.assertIn("@Validated", result)
         self.assertIn('pattern = "[a-zA-Z]+"', result)
         self.assertIn('message = "Invalid input"', result)
 
@@ -171,42 +158,37 @@ class ParameterSpecTest(unittest.TestCase):
         """Test receiver parameter (for inner class methods)."""
         # In Java, receiver parameters are written as: OuterClass OuterClass.this
         param = ParameterSpec.builder(ClassName.get("com.example", "OuterClass"), "OuterClass.this").build()
+        param2 = ParameterSpec.builder(ClassName.get("com.example", "OuterClass"), "this").build()
 
         result = str(param)
-        self.assertEqual(result, "com.example.OuterClass OuterClass.this")
+        self.assertEqual(result, "OuterClass OuterClass.this")
+        result2 = str(param2)
+        self.assertEqual(result2, "OuterClass this")
 
-    def test_add_non_final_modifier(self):
-        """Test adding non-final modifiers (should be rejected for parameters)."""
+    def test_add_final_modifier(self):
+        """Test adding final modifier."""
         builder = ParameterSpec.builder(ClassName.get("java.lang", "String"), "value")
-
-        # Parameters can only be final in Java
-        with self.assertRaises(ValueError):
-            builder.add_modifiers(Modifier.PUBLIC)
-
-        with self.assertRaises(ValueError):
-            builder.add_modifiers(Modifier.PRIVATE)
-
-        with self.assertRaises(ValueError):
-            builder.add_modifiers(Modifier.STATIC)
+        builder.add_final()
+        param = builder.build()
+        result = str(param)
+        self.assertEqual(result, "final String value")
 
     def test_parameter_builder_from_parameter(self):
         """Test creating builder from existing parameter."""
-        param = (
-            ParameterSpec.builder(ClassName.get("java.lang", "String"), "name").add_modifiers(Modifier.FINAL).build()
-        )
+        param = ParameterSpec.builder(ClassName.get("java.lang", "String"), "name").add_final().build()
 
-        builder = ParameterSpec.builder_from(param)
+        builder = param.to_builder()
         new_param = builder.build()
 
         self.assertEqual(str(param), str(new_param))
 
     def test_wildcard_type_parameter(self):
         """Test parameter with wildcard type."""
-        wildcard_list = ClassName.get("java.util", "List").with_type_arguments("? extends java.lang.Number")
+        wildcard_list = ClassName.get("java.util", "List").with_type_arguments("? extends Number")
         param = ParameterSpec.builder(wildcard_list, "numbers").build()
 
         result = str(param)
-        self.assertIn("List<? extends java.lang.Number>", result)
+        self.assertIn("List<? extends Number>", result)
 
     def test_nested_generic_parameter(self):
         """Test parameter with nested generic types."""

@@ -51,9 +51,9 @@ class ClassTypesTest(unittest.TestCase):
           package com.example.hello;
 
           public interface HelloWorld {
-            final public static String ONLY_THING_THAT_IS_CONSTANT = "change";
+            public static final String ONLY_THING_THAT_IS_CONSTANT = "change";
 
-            abstract public void beep();
+            public abstract void beep();
 
           }
         """)
