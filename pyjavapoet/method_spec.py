@@ -6,16 +6,14 @@ methods and constructors in Java classes and interfaces.
 """
 
 from enum import Enum, auto
-from typing import TYPE_CHECKING, List, Optional, Set, Union
+from typing import Optional, Union
 
 from pyjavapoet.annotation_spec import AnnotationSpec
 from pyjavapoet.code_block import CodeBlock
+from pyjavapoet.code_writer import EMPTY_STRING, CodeWriter
 from pyjavapoet.modifier import Modifier
 from pyjavapoet.parameter_spec import ParameterSpec
 from pyjavapoet.type_name import TypeName, TypeVariableName
-
-if TYPE_CHECKING:
-    from pyjavapoet.code_writer import CodeWriter
 
 
 class MethodSpec:
@@ -37,13 +35,13 @@ class MethodSpec:
     def __init__(
         self,
         name: str,
-        modifiers: Set[Modifier],
-        parameters: List["ParameterSpec"],
+        modifiers: set[Modifier],
+        parameters: list["ParameterSpec"],
         return_type: Optional["TypeName"],
-        exceptions: List["TypeName"],
-        type_variables: List["TypeVariableName"],
+        exceptions: list["TypeName"],
+        type_variables: list["TypeVariableName"],
         javadoc: Optional["CodeBlock"],
-        annotations: List["AnnotationSpec"],
+        annotations: list["AnnotationSpec"],
         code: Optional["CodeBlock"],
         default_value: Optional["CodeBlock"],
         kind: "MethodSpec.Kind",
@@ -67,10 +65,8 @@ class MethodSpec:
     def emit(self, code_writer: "CodeWriter") -> None:
         # Emit Javadoc
         if self.javadoc is not None:
-            code_writer.emit("/**\n")
-            code_writer.emit(" * ")
-            self.javadoc.emit(code_writer)
-            code_writer.emit("\n */\n")
+            self.javadoc.emit_javadoc(code_writer)
+            code_writer.emit("\n")
 
         # Emit annotations
         for annotation in self.annotations:
@@ -78,7 +74,7 @@ class MethodSpec:
             code_writer.emit("\n")
 
         # Emit modifiers
-        for modifier in sorted(self.modifiers, key=lambda m: m.value):
+        for modifier in Modifier.ordered_modifiers(self.modifiers):
             code_writer.emit(modifier.value)
             code_writer.emit(" ")
 
@@ -133,7 +129,25 @@ class MethodSpec:
                 self.code.emit(code_writer)
 
             code_writer.unindent()
-            code_writer.emit("}\n")
+            code_writer.emit("}")
+
+    def to_builder(self) -> "MethodSpec.Builder":
+        return MethodSpec.Builder(
+            self.name,
+            self.kind,
+            self.modifiers,
+            [p.copy() for p in self.parameters],
+            self.return_type.copy() if self.return_type else None,
+            [e.copy() for e in self.exceptions],
+            [t.copy() for t in self.type_variables],
+            self.javadoc.copy() if self.javadoc else None,
+            [a.copy() for a in self.annotations],
+            self.code.to_builder() if self.code else CodeBlock.builder(),
+            self.default_value.copy() if self.default_value else None,
+        )
+    
+    def copy(self) -> "MethodSpec":
+        ...
 
     def __str__(self) -> str:
         from pyjavapoet.code_writer import CodeWriter
@@ -148,7 +162,7 @@ class MethodSpec:
 
     @staticmethod
     def constructor_builder() -> "Builder":
-        return MethodSpec.Builder("", MethodSpec.Kind.CONSTRUCTOR)
+        return MethodSpec.Builder("<init>", MethodSpec.Kind.CONSTRUCTOR)
 
     @staticmethod
     def compact_constructor_builder() -> "Builder":
@@ -159,23 +173,49 @@ class MethodSpec:
         Builder for MethodSpec instances.
         """
 
-        def __init__(self, name: str, kind: "MethodSpec.Kind"):
-            self.name = name
-            self.kind = kind
-            self.modifiers = set()
-            self.parameters = []
-            self.return_type = None
-            self.exceptions = []
-            self.type_variables = []
-            self.javadoc = None
-            self.annotations = []
-            self.code_builder = CodeBlock.builder() if kind != MethodSpec.Kind.COMPACT_CONSTRUCTOR else None
-            self.default_value = None
+        # Private fields defined at the top
+        __name: str
+        __kind: "MethodSpec.Kind"
+        __modifiers: set[Modifier]
+        __parameters: list["ParameterSpec"]
+        __return_type: Optional["TypeName"]
+        __exceptions: list["TypeName"]
+        __type_variables: list["TypeVariableName"]
+        __javadoc: Optional["CodeBlock"]
+        __annotations: list["AnnotationSpec"]
+        __code_builder: "CodeBlock.Builder"
+        __default_value: Optional["CodeBlock"]
+
+        def __init__(
+            self,
+            name: str,
+            kind: "MethodSpec.Kind",
+            modifiers: set[Modifier] = set(),
+            parameters: list["ParameterSpec"] = [],
+            return_type: Optional["TypeName"] = None,
+            exceptions: list["TypeName"] = [],
+            type_variables: list["TypeVariableName"] = [],
+            javadoc: Optional["CodeBlock"] = None,
+            annotations: list["AnnotationSpec"] = [],
+            code_builder: "CodeBlock.Builder" = CodeBlock.builder(),
+            default_value: Optional["CodeBlock"] = None,
+        ):
+            self.__name = name
+            self.__kind = kind
+            self.__modifiers = modifiers
+            self.__parameters = parameters
+            self.__return_type = return_type
+            self.__exceptions = exceptions
+            self.__type_variables = type_variables
+            self.__javadoc = javadoc
+            self.__annotations = annotations
+            self.__code_builder = code_builder
+            self.__default_value = default_value
 
         def add_modifiers(self, *modifiers: Modifier) -> "MethodSpec.Builder":
-            self.modifiers.update(modifiers)
+            self.__modifiers.update(modifiers)
             # Check if modifiers are valid for methods
-            Modifier.check_method_modifiers(self.modifiers)
+            Modifier.check_method_modifiers(self.__modifiers)
             return self
 
         def add_parameter(
@@ -184,103 +224,118 @@ class MethodSpec:
             parameter = ParameterSpec.builder(type_name, name)
             if modifiers:
                 parameter.add_modifiers(*modifiers)
-            self.parameters.append(parameter.build())
+            self.__parameters.append(parameter.build())
             return self
 
         def add_parameter_spec(self, parameter_spec: "ParameterSpec") -> "MethodSpec.Builder":
-            self.parameters.append(parameter_spec)
+            self.__parameters.append(parameter_spec)
             return self
 
         def returns(self, return_type: Union["TypeName", str, type]) -> "MethodSpec.Builder":
-            if self.kind != MethodSpec.Kind.METHOD:
+            if self.__kind != MethodSpec.Kind.METHOD:
                 raise ValueError("Only methods can have a return type")
 
             if not isinstance(return_type, TypeName):
                 return_type = TypeName.get(return_type)
 
-            self.return_type = return_type
+            self.__return_type = return_type
             return self
 
         def add_exception(self, exception: Union["TypeName", str, type]) -> "MethodSpec.Builder":
             if not isinstance(exception, TypeName):
                 exception = TypeName.get(exception)
 
-            self.exceptions.append(exception)
+            self.__exceptions.append(exception)
             return self
 
         def add_type_variable(self, type_variable: "TypeVariableName") -> "MethodSpec.Builder":
-            self.type_variables.append(type_variable)
+            self.__type_variables.append(type_variable)
             return self
 
-        def add_javadoc(self, format_string: str, *args) -> "MethodSpec.Builder":
-            self.javadoc = CodeBlock.of(format_string, *args)
+        def add_javadoc(self, format_string: str = EMPTY_STRING, *args) -> "MethodSpec.Builder":
+            if self.__javadoc:
+                self.__javadoc = CodeBlock.join_to_code([self.__javadoc, CodeBlock.of(format_string, *args)], "\n")
+            else:
+                self.__javadoc = CodeBlock.of(format_string, *args)
             return self
 
         def add_annotation(self, annotation_spec: "AnnotationSpec") -> "MethodSpec.Builder":
-            self.annotations.append(annotation_spec)
+            self.__annotations.append(annotation_spec)
             return self
 
         def add_code(self, format_string: str, *args) -> "MethodSpec.Builder":
-            if self.kind == MethodSpec.Kind.COMPACT_CONSTRUCTOR:
+            if self.__kind == MethodSpec.Kind.COMPACT_CONSTRUCTOR:
                 raise ValueError("Compact constructors cannot have a body")
 
-            self.code_builder.add(format_string, *args)
+            if self.__code_builder is not None:
+                self.__code_builder.add(format_string, *args)
             return self
 
         def add_statement(self, format_string: str, *args) -> "MethodSpec.Builder":
-            if self.kind == MethodSpec.Kind.COMPACT_CONSTRUCTOR:
+            if self.__kind == MethodSpec.Kind.COMPACT_CONSTRUCTOR:
                 raise ValueError("Compact constructors cannot have a body")
 
-            self.code_builder.add_statement(format_string, *args)
+            if self.__code_builder is not None:
+                self.__code_builder.add_statement(format_string, *args)
+            return self
+
+        def add_comment(self, comment: str) -> "MethodSpec.Builder":
+            if self.__code_builder is not None:
+                self.__code_builder.add_comment(comment)
             return self
 
         def begin_control_flow(self, control_flow_string: str, *args) -> "MethodSpec.Builder":
-            if self.kind == MethodSpec.Kind.COMPACT_CONSTRUCTOR:
+            if self.__kind == MethodSpec.Kind.COMPACT_CONSTRUCTOR:
                 raise ValueError("Compact constructors cannot have a body")
 
-            self.code_builder.begin_control_flow(control_flow_string, *args)
+            if self.__code_builder is not None:
+                self.__code_builder.begin_control_flow(control_flow_string, *args)
             return self
 
         def next_control_flow(self, control_flow_string: str, *args) -> "MethodSpec.Builder":
-            if self.kind == MethodSpec.Kind.COMPACT_CONSTRUCTOR:
+            if self.__kind == MethodSpec.Kind.COMPACT_CONSTRUCTOR:
                 raise ValueError("Compact constructors cannot have a body")
 
-            self.code_builder.next_control_flow(control_flow_string, *args)
+            if self.__code_builder is not None:
+                self.__code_builder.next_control_flow(control_flow_string, *args)
             return self
 
         def end_control_flow(self) -> "MethodSpec.Builder":
-            if self.kind == MethodSpec.Kind.COMPACT_CONSTRUCTOR:
+            if self.__kind == MethodSpec.Kind.COMPACT_CONSTRUCTOR:
                 raise ValueError("Compact constructors cannot have a body")
-
-            self.code_builder.end_control_flow()
+            self.__code_builder.end_control_flow()
             return self
 
         def default_value(self, format_string: str, *args) -> "MethodSpec.Builder":
-            self.default_value = CodeBlock.of(format_string, *args)
+            self.__default_value = CodeBlock.of(format_string, *args)
+            return self
+
+        def set_name(self, name: str) -> "MethodSpec.Builder":
+            self.__name = name
             return self
 
         def build(self) -> "MethodSpec":
             # Set constructor name from enclosing class
-            if self.kind == MethodSpec.Kind.CONSTRUCTOR or self.kind == MethodSpec.Kind.COMPACT_CONSTRUCTOR:
-                if not self.name:
+            if self.__kind == MethodSpec.Kind.CONSTRUCTOR or self.__kind == MethodSpec.Kind.COMPACT_CONSTRUCTOR:
+                if not self.__name:
                     # Will be set later when the method is added to a class
                     pass
 
             # Validate method
-            if self.kind == MethodSpec.Kind.METHOD:
-                if Modifier.ABSTRACT in self.modifiers and self.code_builder and self.code_builder.format_parts:
+            if self.__kind == MethodSpec.Kind.METHOD:
+                if Modifier.ABSTRACT in self.__modifiers and self.__code_builder and self.__code_builder.format_parts:
                     raise ValueError("Abstract methods cannot have a body")
 
             return MethodSpec(
-                self.name,
-                self.modifiers.copy(),
-                self.parameters.copy(),
-                self.return_type,
-                self.exceptions.copy(),
-                self.type_variables.copy(),
-                self.javadoc,
-                self.annotations.copy(),
-                self.code_builder.build() if self.code_builder else None,
-                self.default_value,
-                self.kind,
+                self.__name,
+                self.__modifiers.copy(),
+                self.__parameters.copy(),
+                self.__return_type,
+                self.__exceptions.copy(),
+                self.__type_variables.copy(),
+                self.__javadoc,
+                self.__annotations.copy(),
+                self.__code_builder.build() if self.__code_builder else None,
+                self.__default_value,
+                self.__kind,
             )

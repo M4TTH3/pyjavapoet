@@ -48,8 +48,6 @@ class ControlFlowTest(unittest.TestCase):
         # Check the output
         expected = """package com.example.time;
 
-import java.lang.System;
-
 public class TimeChecker {
   public void checkTime() {
     long now = System.currentTimeMillis();
@@ -63,6 +61,7 @@ public class TimeChecker {
   }
 }
 """
+        print(out.getvalue())
         self.assertEqual(expected, out.getvalue())
 
     def test_try_catch(self):

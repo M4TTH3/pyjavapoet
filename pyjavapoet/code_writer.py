@@ -11,6 +11,12 @@ from typing import Literal
 from pyjavapoet.type_name import ClassName, TypeName
 
 
+class Constant(str):
+    def __new__(cls, value: str):
+        return str.__new__(cls, value)
+
+EMPTY_STRING = Constant("")
+
 class CodeWriter:
     """
     Handles emitting Java code with proper formatting.
@@ -39,14 +45,14 @@ class CodeWriter:
         if self.__indent_level > 0:
             self.__indent_level -= min(count, self.__indent_level)
 
-    def emit(self, s: str, new_line_prefix: str = "") -> "CodeWriter":
+    def emit(self, s: str | Constant, new_line_prefix: str = "") -> "CodeWriter":
         if s.startswith("\n"):
             # Reset line start
             self.__out.append("\n")
             self.__line_start = True
             s = s[1:]
 
-        if not s:
+        if not s and not isinstance(s, Constant):
             return self
 
         if self.__line_start:
@@ -75,7 +81,7 @@ class CodeWriter:
         if isinstance(type_name, ClassName):
             # Record that we need to import this type
             if type_name.package_name and not type_name.ignore_package_name:
-                self.__imports.add(type_name)
+                self.__imports.add(type_name.package_name)
 
             self.emit(type_name.nested_name)
         else:

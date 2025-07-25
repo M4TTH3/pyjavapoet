@@ -33,7 +33,7 @@ class Modifier(Enum):
     NON_SEALED = "non-sealed"
 
     @staticmethod
-    def ordered_modifiers(modifiers: list["Modifier"]) -> list["Modifier"]:
+    def ordered_modifiers(modifiers: set["Modifier"]) -> list["Modifier"]:
         # Java modifier order: public, protected, private, abstract, static, final, transient, volatile, synchronized, native, strictfp, sealed, non-sealed, default
         order = [
             Modifier.PUBLIC,

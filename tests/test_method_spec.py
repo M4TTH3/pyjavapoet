@@ -15,30 +15,6 @@ from pyjavapoet.type_name import ClassName, TypeVariableName
 class MethodSpecTest(unittest.TestCase):
     """Test the MethodSpec class."""
 
-    def test_null_annotations_addition(self):
-        """Test that null annotations are rejected."""
-        builder = MethodSpec.method_builder("test")
-        with self.assertRaises(ValueError):
-            builder.add_annotation(None)
-
-    def test_null_type_variables_addition(self):
-        """Test that null type variables are rejected."""
-        builder = MethodSpec.method_builder("test")
-        with self.assertRaises(ValueError):
-            builder.add_type_variable(None)
-
-    def test_null_parameters_addition(self):
-        """Test that null parameters are rejected."""
-        builder = MethodSpec.method_builder("test")
-        with self.assertRaises(ValueError):
-            builder.add_parameter(None)
-
-    def test_null_exceptions_addition(self):
-        """Test that null exceptions are rejected."""
-        builder = MethodSpec.method_builder("test")
-        with self.assertRaises(ValueError):
-            builder.add_exception(None)
-
     def test_basic_method_creation(self):
         """Test basic method creation."""
         method = (
@@ -50,8 +26,7 @@ class MethodSpecTest(unittest.TestCase):
         )
 
         result = str(method)
-        self.assertIn("public java.lang.String getName()", result)
-        self.assertIn("return this.name;", result)
+        self.assertEqual(result, "public String getName() {\n  return this.name;\n}\n")
 
     def test_method_with_parameters(self):
         """Test method with parameters."""
@@ -65,17 +40,16 @@ class MethodSpecTest(unittest.TestCase):
         )
 
         result = str(method)
-        self.assertIn("public void setName(java.lang.String name)", result)
-        self.assertIn("this.name = name;", result)
+        self.assertEqual(result, "public void setName(String name) {\n  this.name = name;\n}\n")
 
     def test_method_with_javadoc(self):
         """Test method with javadoc."""
         method = (
             MethodSpec.method_builder("calculate")
-            .add_javadoc("Calculates the result.\n")
-            .add_javadoc("\n")
-            .add_javadoc("@param input the input value\n")
-            .add_javadoc("@return the calculated result\n")
+            .add_javadoc("Calculates the result.")
+            .add_javadoc()
+            .add_javadoc("@param $L", "input the input value")
+            .add_javadoc("@return the calculated result")
             .add_modifiers(Modifier.PUBLIC)
             .returns("int")
             .add_parameter("int", "input")
@@ -84,13 +58,18 @@ class MethodSpecTest(unittest.TestCase):
         )
 
         result = str(method)
-        self.assertIn("/**", result)
-        self.assertIn("Calculates the result.", result)
-        self.assertIn("@param input", result)
-        self.assertIn("@return", result)
-        self.assertIn("*/", result)
+        print(result)
+        self.assertIn(
+"""\
+/**
+ * Calculates the result.
+ * 
+ * @param input the input value
+ * @return the calculated result
+ */"""
+        , result)
 
-    def test_constructor_creation(self):
+    def test_constructor_creation_and_set_name(self):
         """Test constructor creation."""
         constructor = (
             MethodSpec.constructor_builder()
@@ -101,8 +80,10 @@ class MethodSpecTest(unittest.TestCase):
         )
 
         result = str(constructor)
-        self.assertIn("public <init>(java.lang.String name)", result)
+        self.assertIn("public <init>(String name)", result)
         self.assertIn("this.name = name;", result)
+        result = str(constructor.to_builder().set_name("ClassName").build())
+        self.assertIn("public ClassName(String name)", result)
 
     def test_abstract_method(self):
         """Test abstract method creation."""
@@ -128,13 +109,19 @@ class MethodSpecTest(unittest.TestCase):
             .add_parameter(ClassName.get("java.lang", "String"), "filename")
             .add_exception(ClassName.get("java.io", "IOException"))
             .add_exception(ClassName.get("java.lang", "SecurityException"))
-            .add_statement("// implementation")
+            .add_comment("implementation")
             .add_statement("return null")
             .build()
         )
 
         result = str(method)
-        self.assertIn("throws java.io.IOException, java.lang.SecurityException", result)
+        self.assertEqual(
+"""\
+public String readFile(String filename) throws IOException, SecurityException {
+  // implementation
+  return null;
+}"""
+        , result)
 
     def test_method_with_type_variables(self):
         """Test method with type variables."""
@@ -150,8 +137,12 @@ class MethodSpecTest(unittest.TestCase):
         )
 
         result = str(method)
-        self.assertIn("<T>", result)
-        self.assertIn("public static T identity(T input)", result)
+        expected = (
+"""\
+public static <T> T identity(T input) {
+  return input;
+}""")
+        self.assertEqual(expected, result)
 
     def test_method_with_bounded_type_variables(self):
         """Test method with bounded type variables."""

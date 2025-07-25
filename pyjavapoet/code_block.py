@@ -9,11 +9,14 @@ placeholders like $L (literals), $S (strings), $T (types), and $N (names).
 import re
 from typing import Any
 
+from code_base import Code
+from util import deep_copy
+
 from pyjavapoet.code_writer import CodeWriter
 from pyjavapoet.type_name import TypeName
 
 
-class CodeBlock:
+class CodeBlock(Code["CodeBlock"]):
     """
     A fragment of code with formatting.
 
@@ -99,15 +102,17 @@ class CodeBlock:
                     elif placeholder_type == "S":  # String
                         # Escape special characters
                         escaped = str(arg).replace("\\", "\\\\").replace('"', '\\"')
-
                         # Add quotes
                         code_writer.emit(f'"{escaped}"', new_line_prefix)
                     elif placeholder_type == "T":  # Type
                         # Let the CodeWriter handle type imports
                         arg = TypeName.get(arg)
-                        arg.emit(code_writer, new_line_prefix)
+                        arg.emit(code_writer)
                     elif placeholder_type == "N":  # Name
-                        code_writer.emit(str(arg), new_line_prefix)
+                        if hasattr(arg, "name"):
+                            code_writer.emit(arg.name, new_line_prefix)
+                        else:
+                            code_writer.emit(str(arg), new_line_prefix)
   
                 # Emit everything after the placeholder
                 if placeholder_match.end() < len(part):
@@ -125,14 +130,9 @@ class CodeBlock:
         writer = CodeWriter()
         self.emit_javadoc(writer)
         return str(writer)
-
-    def __str__(self) -> str:
-        writer = CodeWriter()
-        self.emit(writer)
-        return str(writer)
-
-    def copy(self) -> "CodeBlock":
-        return CodeBlock(self.format_parts.copy(), self.args.copy(), self.named_args.copy())
+    
+    def to_builder(self) -> "Builder":
+        return CodeBlock.Builder(deep_copy(self.format_parts), deep_copy(self.args), deep_copy(self.named_args))
 
     @staticmethod
     def of(format_string: str, *args, **kwargs) -> "CodeBlock":
@@ -141,9 +141,9 @@ class CodeBlock:
     @staticmethod
     def builder() -> "Builder":
         return CodeBlock.Builder()
-
+    
     @staticmethod
-    def join_to_code(code_blocks: list["CodeBlock"], separator: str) -> "CodeBlock":
+    def join_to_code(code_blocks: list["CodeBlock"], separator: str = "") -> "CodeBlock":
         builder = CodeBlock.builder()
         if not code_blocks:
             return builder.build()
@@ -157,16 +157,8 @@ class CodeBlock:
             builder.add("$L", code_block)
 
         return builder.build()
-    
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, CodeBlock):
-            return False
-        return str(self) == str(other)
-    
-    def __hash__(self) -> int:
-        return hash(str(self))
 
-    class Builder:
+    class Builder(Code.Builder["CodeBlock"]):
         """
         Builder for CodeBlock instances.
         """
@@ -174,10 +166,15 @@ class CodeBlock:
         args: list[Any]
         named_args: dict[str, Any]
 
-        def __init__(self):
-            self.format_parts = []
-            self.args = []
-            self.named_args = {}
+        def __init__(
+            self,
+            format_parts: list[str] | None = None,
+            args: list[Any] | None = None,
+            named_args: dict[str, Any] | None = None,
+        ):
+            self.format_parts = format_parts or []
+            self.args = args or []
+            self.named_args = named_args or {}
 
         def add(self, format_string: str, *args, **kwargs) -> "CodeBlock.Builder":
             # Check for arguments in the format string
@@ -222,6 +219,10 @@ class CodeBlock:
                 self.add(format_string, *args, **kwargs)
                 self.add(";\n")
             return self
+        
+        def add_comment(self, comment: str) -> "CodeBlock.Builder":
+            self.add("// $L\n", comment)
+            return self
 
         def begin_control_flow(self, control_flow_string: str, *args, **kwargs) -> "CodeBlock.Builder":
             self.add(control_flow_string, *args, **kwargs)
@@ -239,4 +240,4 @@ class CodeBlock:
             return self
 
         def build(self) -> "CodeBlock":
-            return CodeBlock(self.format_parts.copy(), self.args.copy(), self.named_args.copy())
+            return CodeBlock(deep_copy(self.format_parts), deep_copy(self.args), deep_copy(self.named_args))

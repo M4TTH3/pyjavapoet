@@ -68,6 +68,18 @@ class ParameterSpec:
         writer = CodeWriter()
         self.emit(writer)
         return str(writer)
+    
+    def to_builder(self) -> "ParameterSpec.Builder":
+        ...
+
+    def copy(self) -> "ParameterSpec":
+        return ParameterSpec(
+            self.type_name.copy(),
+            self.name,
+            self.modifiers.copy(),
+            [a.copy() for a in self.annotations],
+            self.varargs,
+        )
 
     @staticmethod
     def builder(type_name: Union["TypeName", str, type], name: str) -> "Builder":

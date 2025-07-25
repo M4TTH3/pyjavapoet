@@ -5,19 +5,23 @@ This module defines the AnnotationSpec class, which is used to represent
 Java annotations for classes, methods, fields, parameters, etc.
 """
 
-from typing import Union
+from typing import Any, Union
+
+from code_base import Code
 
 from pyjavapoet.code_block import CodeBlock
 from pyjavapoet.code_writer import CodeWriter
 from pyjavapoet.type_name import TypeName
 
 
-class AnnotationSpec:
+class AnnotationSpec(Code["AnnotationSpec"]):
     """
     Represents a Java annotation.
 
     AnnotationSpec instances are immutable. Use the builder to create new instances.
     """
+    type_name: "TypeName"
+    members: dict[str, list[CodeBlock]]
 
     def __init__(self, type_name: "TypeName", members: dict[str, list[CodeBlock]]):
         self.type_name = type_name
@@ -60,15 +64,12 @@ class AnnotationSpec:
 
         code_writer.emit(")")
 
-    def __str__(self) -> str:
-        from pyjavapoet.code_writer import CodeWriter
 
-        writer = CodeWriter()
-        self.emit(writer)
-        return str(writer)
-    
-    def __hash__(self) -> int:
-        return hash(str(self))
+    def to_builder(self) -> "Builder":
+        return AnnotationSpec.Builder(
+            self.type_name,
+            {name: [value.copy() for value in values] for name, values in self.members.items()}
+        )
 
     @staticmethod
     def get(type_name: Union["TypeName", str, type]) -> "AnnotationSpec":
@@ -78,30 +79,27 @@ class AnnotationSpec:
     def builder(type_name: Union["TypeName", str, type]) -> "Builder":
         return AnnotationSpec.Builder(TypeName.get(type_name))
 
-    class Builder:
+    class Builder(Code.Builder["AnnotationSpec"]):
         """
         Builder for AnnotationSpec instances.
         """
+        __type_name: "TypeName"
+        __members: dict[str, list[CodeBlock]]
 
-        def __init__(self, type_name: "TypeName"):
-            self.type_name = type_name
-            self.members: dict[str, list[CodeBlock]] = {}  # property name -> list of values
+        def __init__(self, type_name: "TypeName", members: dict[str, list[CodeBlock]] | None = None):
+            self.__type_name = type_name
+            self.__members = members or {}  # property name -> list of values
 
-        def add_member(self, name: str, format_string: str, *args) -> "AnnotationSpec.Builder":
-            from pyjavapoet.code_block import CodeBlock
-
+        def add_member(self, name: str, format_string: str, *args: Any) -> "AnnotationSpec.Builder":
             code_block = CodeBlock.of(format_string, *args)
 
-            if name not in self.members:
-                self.members[name] = []
+            if name not in self.__members:
+                self.__members[name] = []
 
-            self.members[name].append(code_block)
+            self.__members[name].append(code_block)
             return self
 
         def build(self) -> "AnnotationSpec":
             # Create a deep copy of members
-            members_copy = {}
-            for name, values in self.members.items():
-                members_copy[name] = values.copy()
-
-            return AnnotationSpec(self.type_name, members_copy)
+            members_copy = {name: [value.copy() for value in values] for name, values in self.__members.items()}
+            return AnnotationSpec(self.__type_name.copy(), members_copy)

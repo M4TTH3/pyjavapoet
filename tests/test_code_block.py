@@ -30,6 +30,36 @@ class CodeBlockTest(unittest.TestCase):
         self.assertEqual(a, b)
         self.assertEqual(hash(a), hash(b))
 
+    def test_copy_and_to_builder(self):
+        """Test copy() and to_builder() methods of CodeBlock."""
+        # Create a complex CodeBlock
+        block = (
+            CodeBlock.builder()
+            .add("if ($L)", True)
+            .begin_control_flow("")
+            .add_statement("System.out.println($S)", "Hello")
+            .end_control_flow()
+            .build()
+        )
+
+        # Test copy() produces an equal but not identical object
+        block_copy = block.copy()
+        self.assertEqual(block, block_copy)
+        self.assertIsNot(block, block_copy)
+        self.assertEqual(str(block), str(block_copy))
+
+        # Mutate the copy's builder and ensure original is unchanged
+        builder = block.to_builder()
+        builder.add_statement("System.out.println($S)", "World")
+        new_block = builder.build()
+        self.assertNotEqual(str(block), str(new_block))
+        self.assertIn("World", str(new_block))
+        self.assertNotIn("World", str(block))
+
+        # to_builder should produce a builder that can round-trip
+        rebuilt = builder.build()
+        self.assertEqual(str(new_block), str(rebuilt))
+
     def test_of(self):
         """Test CodeBlock.of() factory method."""
         a = CodeBlock.of("$L taco", "delicious")
