@@ -4,12 +4,13 @@ Equivalent to MethodSpecTest.java
 """
 
 import unittest
+from textwrap import dedent
 
 from pyjavapoet.annotation_spec import AnnotationSpec
 from pyjavapoet.method_spec import MethodSpec
 from pyjavapoet.modifier import Modifier
 from pyjavapoet.parameter_spec import ParameterSpec
-from pyjavapoet.type_name import ClassName, TypeVariableName
+from pyjavapoet.type_name import ClassName, ParameterizedTypeName, TypeVariableName
 
 
 class MethodSpecTest(unittest.TestCase):
@@ -148,18 +149,20 @@ public static <T> T identity(T input) {
     def test_method_with_bounded_type_variables(self):
         """Test method with bounded type variables."""
         t_var = TypeVariableName.get("T", ClassName.get("java.lang", "Number"))
+        t_var2 = ParameterizedTypeName.get("List", t_var)
         method = (
             MethodSpec.method_builder("process")
             .add_type_variable(t_var)
             .add_modifiers(Modifier.PUBLIC)
             .returns("void")
             .add_parameter(t_var, "number")
+            .add_parameter(t_var2, "numbers")
             .add_statement("// process number")
             .build()
         )
 
         result = str(method)
-        self.assertIn("<T extends Number> void process(T number)", result)
+        self.assertIn("<T extends Number> void process(T number, List<T> numbers)", result)
 
     def test_static_method(self):
         """Test static method creation."""
@@ -192,8 +195,8 @@ public static <T> T identity(T input) {
         )
 
         result = str(method)
-        self.assertIn("@java.lang.Override", result)
-        self.assertIn("@java.lang.Deprecated", result)
+        self.assertIn("@Override", result)
+        self.assertIn("@Deprecated", result)
 
     def test_method_with_varargs(self):
         """Test method with varargs parameter."""
@@ -230,7 +233,7 @@ public static <T> T identity(T input) {
 
         result = str(method)
         # Should only appear once
-        self.assertEqual(result.count("java.io.IOException"), 1)
+        self.assertEqual(result.count("IOException"), 1)
 
     def test_method_to_builder(self):
         """Test method to builder conversion."""
@@ -250,18 +253,28 @@ public static <T> T identity(T input) {
             MethodSpec.method_builder("example")
             .add_modifiers(Modifier.PUBLIC)
             .returns("void")
-            .add_named_code("$L", "if (condition)")
-            .begin_control_flow("")
+            .add_statement("var condition = true")
+            .begin_control_flow("if (condition)")
             .add_statement("doSomething()")
             .end_control_flow()
             .build()
         )
 
         result = str(method)
-        self.assertIn("if (condition)", result)
-        self.assertIn("doSomething();", result)
+        self.assertEqual(
+            result,
+            dedent(
+                """\
+                public void example() {
+                  var condition = true;
+                  if (condition) {
+                    doSomething();
+                  }
+                }"""
+            )
+        )
 
-    def test_ensure_trailing_newline(self):
+    def test_ensure_no_trailing_newline(self):
         """Test that methods end with proper newlines."""
         method = (
             MethodSpec.method_builder("test")
@@ -272,7 +285,7 @@ public static <T> T identity(T input) {
         )
 
         result = str(method)
-        self.assertTrue(result.endswith("}\n"))
+        self.assertTrue(result.endswith("}"))
 
     def test_interface_method(self):
         """Test interface method (no body)."""
@@ -352,13 +365,13 @@ public static <T> T identity(T input) {
             MethodSpec.method_builder("process")
             .add_modifiers(Modifier.PUBLIC)
             .returns("void")
-            .add_parameter(param)
+            .add_parameter(param, "name")
             .add_statement("// process name")
             .build()
         )
 
         result = str(method)
-        self.assertIn("@javax.annotation.Nullable java.lang.String name", result)
+        self.assertIn("@Nullable String name", result)
 
 
 if __name__ == "__main__":

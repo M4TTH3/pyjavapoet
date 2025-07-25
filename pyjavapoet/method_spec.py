@@ -8,6 +8,7 @@ methods and constructors in Java classes and interfaces.
 from enum import Enum, auto
 from typing import Optional, Union
 
+from code_base import Code
 from util import deep_copy
 
 from pyjavapoet.annotation_spec import AnnotationSpec
@@ -18,7 +19,7 @@ from pyjavapoet.parameter_spec import ParameterSpec
 from pyjavapoet.type_name import TypeName, TypeVariableName
 
 
-class MethodSpec:
+class MethodSpec(Code["MethodSpec"]):
     """
     Represents a method or constructor in a class or interface.
 
@@ -40,7 +41,7 @@ class MethodSpec:
         modifiers: set[Modifier],
         parameters: list["ParameterSpec"],
         return_type: Optional["TypeName"],
-        exceptions: list["TypeName"],
+        exceptions: set["TypeName"],
         type_variables: list["TypeVariableName"],
         javadoc: Optional["CodeBlock"],
         annotations: list["AnnotationSpec"],
@@ -170,7 +171,7 @@ class MethodSpec:
     def compact_constructor_builder() -> "Builder":
         return MethodSpec.Builder("", MethodSpec.Kind.COMPACT_CONSTRUCTOR)
 
-    class Builder:
+    class Builder(Code.Builder["MethodSpec"]):
         """
         Builder for MethodSpec instances.
         """
@@ -181,7 +182,7 @@ class MethodSpec:
         __modifiers: set[Modifier]
         __parameters: list["ParameterSpec"]
         __return_type: Optional["TypeName"]
-        __exceptions: list["TypeName"]
+        __exceptions: set["TypeName"]
         __type_variables: list["TypeVariableName"]
         __javadoc: Optional["CodeBlock"]
         __annotations: list["AnnotationSpec"]
@@ -195,7 +196,7 @@ class MethodSpec:
             modifiers: set[Modifier] | None = None,
             parameters: list["ParameterSpec"] | None = None,
             return_type: Optional["TypeName"] = None,
-            exceptions: list["TypeName"] | None = None,
+            exceptions: set["TypeName"] | None = None,
             type_variables: list["TypeVariableName"] | None = None,
             javadoc: Optional["CodeBlock"] = None,
             annotations: list["AnnotationSpec"] | None = None,
@@ -207,7 +208,7 @@ class MethodSpec:
             self.__modifiers = modifiers or set()
             self.__parameters = parameters or []
             self.__return_type = return_type
-            self.__exceptions = exceptions or []
+            self.__exceptions = exceptions or set()
             self.__type_variables = type_variables or []
             self.__javadoc = javadoc
             self.__annotations = annotations or []
@@ -221,11 +222,15 @@ class MethodSpec:
             return self
 
         def add_parameter(
-            self, type_name: Union["TypeName", str, type], name: str, *modifiers: Modifier
+            self, parameter_spec: Union["ParameterSpec", "TypeName", str, type], name: str, final: bool = False
         ) -> "MethodSpec.Builder":
-            parameter = ParameterSpec.builder(type_name, name)
-            if modifiers:
-                parameter.add_modifiers(*modifiers)
+            if isinstance(parameter_spec, ParameterSpec):
+                parameter = parameter_spec.to_builder()
+            else:
+                parameter = ParameterSpec.builder(parameter_spec, name)
+
+            if final:
+                parameter.add_final()
             self.__parameters.append(parameter.build())
             return self
 
@@ -247,7 +252,7 @@ class MethodSpec:
             if not isinstance(exception, TypeName):
                 exception = TypeName.get(exception)
 
-            self.__exceptions.append(exception)
+            self.__exceptions.add(exception)
             return self
 
         def add_type_variable(self, type_variable: "TypeVariableName") -> "MethodSpec.Builder":

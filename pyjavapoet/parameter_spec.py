@@ -13,7 +13,7 @@ from util import deep_copy, throw_if_invalid_java_identifier
 
 from pyjavapoet.annotation_spec import AnnotationSpec
 from pyjavapoet.modifier import Modifier
-from pyjavapoet.type_name import ArrayTypeName, TypeName
+from pyjavapoet.type_name import ArrayTypeName, ParameterizedTypeName, TypeName, TypeVariableName
 
 if TYPE_CHECKING:
     from pyjavapoet.code_writer import CodeWriter
@@ -60,6 +60,8 @@ class ParameterSpec(Code["ParameterSpec"]):
             else:
                 self.type_name.emit(code_writer)
                 code_writer.emit("...")
+        elif isinstance(self.type_name, TypeVariableName):
+            self.type_name.emit_name_only(code_writer)
         else:
             self.type_name.emit(code_writer)
 

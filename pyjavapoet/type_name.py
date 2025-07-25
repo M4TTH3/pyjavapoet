@@ -330,7 +330,10 @@ class ParameterizedTypeName(TypeName):
                 if type_argument.is_primitive() and isinstance(type_argument, ClassName):
                     type_argument = type_argument.to_type_param()
 
-                type_argument.emit(code_writer)
+                if isinstance(type_argument, TypeVariableName):
+                    type_argument.emit_name_only(code_writer)
+                else:
+                    type_argument.emit(code_writer)
             code_writer.emit(">")
 
     def copy(self) -> "ParameterizedTypeName":
@@ -377,12 +380,7 @@ class TypeVariableName(TypeName):
 
     def emit(self, code_writer: "CodeWriter") -> None:
         # Emit annotations
-        for annotation in self.annotations:
-            annotation.emit(code_writer)
-            code_writer.emit(" ")
-
-        # Emit name
-        code_writer.emit(self.name)
+        self.emit_name_only(code_writer)
 
         # Emit bounds
         if self.bounds:
@@ -391,6 +389,14 @@ class TypeVariableName(TypeName):
                 if i > 0:
                     code_writer.emit(" & ")
                 bound.emit(code_writer)
+
+    def emit_name_only(self, code_writer: "CodeWriter") -> None:
+        for annotation in self.annotations:
+            annotation.emit(code_writer)
+            code_writer.emit(" ")
+
+        # Emit name
+        code_writer.emit(self.name)
 
     def copy(self) -> "TypeVariableName":
         return TypeVariableName(self.name, deep_copy(self.bounds), deep_copy(self.annotations))
