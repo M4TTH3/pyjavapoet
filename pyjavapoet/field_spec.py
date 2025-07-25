@@ -7,6 +7,9 @@ fields in Java classes, interfaces, and enums.
 
 from typing import TYPE_CHECKING, Optional, Union
 
+from code_base import Code
+from util import deep_copy
+
 from pyjavapoet.annotation_spec import AnnotationSpec
 from pyjavapoet.code_block import CodeBlock
 from pyjavapoet.modifier import Modifier
@@ -16,7 +19,7 @@ if TYPE_CHECKING:
     from pyjavapoet.code_writer import CodeWriter
 
 
-class FieldSpec:
+class FieldSpec(Code["FieldSpec"]):
     """
     Represents a field in a class, interface, or enum.
 
@@ -68,30 +71,15 @@ class FieldSpec:
             self.initializer.emit(code_writer)
 
         code_writer.emit(";\n")
-
-    def __str__(self) -> str:
-        from pyjavapoet.code_writer import CodeWriter
-
-        writer = CodeWriter()
-        self.emit(writer)
-        return str(writer)
-    
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, FieldSpec):
-            return False
-        return str(self) == str(other)
-
-    def __hash__(self) -> int:
-        return hash(str(self))
     
     def to_builder(self) -> "Builder":
         return FieldSpec.Builder(
-            self.type_name.copy(),
+            deep_copy(self.type_name),
             self.name,
-            self.modifiers.copy(),
-            self.annotations.copy(),
-            self.javadoc.copy() if self.javadoc is not None else None,
-            self.initializer.copy() if self.initializer is not None else None,
+            deep_copy(self.modifiers),
+            deep_copy(self.annotations),
+            deep_copy(self.javadoc),
+            deep_copy(self.initializer),
         )
 
     @staticmethod
@@ -115,7 +103,7 @@ class FieldSpec:
             type_name = TypeName.get(type_name)
         return FieldSpec.Builder(type_name, name)
 
-    class Builder:
+    class Builder(Code.Builder["FieldSpec"]):
         """
         Builder for FieldSpec instances.
         """
@@ -130,15 +118,15 @@ class FieldSpec:
         def __init__(self, 
             type_name: "TypeName", 
             name: str, 
-            modifiers: set[Modifier] = set(), 
-            annotations: list["AnnotationSpec"] = [], 
+            modifiers: set[Modifier] | None = None, 
+            annotations: list["AnnotationSpec"] | None = None, 
             javadoc: Optional["CodeBlock"] = None, 
             initializer: Optional["CodeBlock"] = None
         ):
             self.__type_name = type_name
             self.__name = name
-            self.__modifiers = modifiers
-            self.__annotations = annotations
+            self.__modifiers = modifiers or set()
+            self.__annotations = annotations or []
             self.__javadoc = javadoc
             self.__initializer = initializer
 
@@ -156,16 +144,19 @@ class FieldSpec:
             self.__javadoc = CodeBlock.of(format_string, *args)
             return self
 
-        def initializer(self, format_string: str, *args) -> "FieldSpec.Builder":
-            self.__initializer = CodeBlock.of(format_string, *args)
+        def initializer(self, format_string: str | CodeBlock, *args) -> "FieldSpec.Builder":
+            if isinstance(format_string, str):
+                self.__initializer = CodeBlock.of(format_string, *args)
+            else:
+                self.__initializer = format_string
             return self
 
         def build(self) -> "FieldSpec":
             return FieldSpec(
-                self.__type_name,
+                deep_copy(self.__type_name),
                 self.__name,
-                self.__modifiers.copy(),
-                self.__annotations.copy(),
-                self.__javadoc,
-                self.__initializer,
+                deep_copy(self.__modifiers),
+                deep_copy(self.__annotations),
+                deep_copy(self.__javadoc),
+                deep_copy(self.__initializer),
             )

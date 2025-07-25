@@ -112,7 +112,7 @@ class MethodSpec(Code["MethodSpec"]):
         # Emit exceptions
         if self.exceptions:
             code_writer.emit(" throws ")
-            for i, exception in enumerate(self.exceptions):
+            for i, exception in enumerate(sorted(self.exceptions, key=lambda x: str(x))):
                 if i > 0:
                     code_writer.emit(", ")
                 exception.emit(code_writer)
@@ -132,7 +132,7 @@ class MethodSpec(Code["MethodSpec"]):
                 self.code.emit(code_writer)
 
             code_writer.unindent()
-            code_writer.emit("}")
+            code_writer.emit("}\n")
 
     def to_builder(self) -> "MethodSpec.Builder":
         return MethodSpec.Builder(

@@ -10,7 +10,9 @@ This module defines the TypeSpec class, which is used to represent Java types:
 """
 
 from enum import Enum, auto
-from typing import Dict, List, Optional, Set, Tuple, Union
+from typing import Dict, Optional, Tuple, Union
+
+from util import deep_copy
 
 from pyjavapoet.annotation_spec import AnnotationSpec
 from pyjavapoet.code_block import CodeBlock
@@ -70,22 +72,42 @@ class TypeSpec:
             type_spec.superclass = self.type_name
             return type_spec
 
+    # Fields for TypeSpec
+    name: str
+    kind: "TypeSpec.Kind"
+    modifiers: set["Modifier"]
+    type_variables: list["TypeVariableName"]
+    superclass: "TypeName | None"
+    superinterfaces: list["TypeName"]
+    permitted_subclasses: list["TypeName"]
+    javadoc: "CodeBlock | None"
+    annotations: list["AnnotationSpec"]
+    fields: list["FieldSpec"]
+    methods: list["MethodSpec"]
+    types: list["TypeSpec"]
+    enum_constants: dict[str, "TypeSpec"]
+    record_components: list[tuple["TypeName", str]]
+
+    # For anonymous classes
+    anonymous_class_format: str
+    anonymous_class_args: list
+
     def __init__(
         self,
         name: str,
         kind: "TypeSpec.Kind",
-        modifiers: Set[Modifier],
-        type_variables: List[TypeVariableName],
+        modifiers: set[Modifier],
+        type_variables: list[TypeVariableName],
         superclass: Optional[TypeName],
-        superinterfaces: List[TypeName],
-        permitted_subclasses: List[TypeName],
+        superinterfaces: list[TypeName],
+        permitted_subclasses: list[TypeName],
         javadoc: Optional[CodeBlock],
-        annotations: List[AnnotationSpec],
-        fields: List[FieldSpec],
-        methods: List[MethodSpec],
-        types: List["TypeSpec"],
+        annotations: list[AnnotationSpec],
+        fields: list[FieldSpec],
+        methods: list[MethodSpec],
+        types: list["TypeSpec"],
         enum_constants: Dict[str, "TypeSpec"],
-        record_components: List[Tuple[TypeName, str]],
+        record_components: list[Tuple[TypeName, str]],
     ):
         self.name = name
         self.kind = kind
@@ -236,7 +258,6 @@ class TypeSpec:
         # Emit fields
         for field in self.fields:
             field.emit(code_writer)
-            code_writer.emit("\n")
 
         if self.fields and (self.methods or self.types):
             code_writer.emit("\n")
@@ -302,70 +323,102 @@ class TypeSpec:
         Builder for TypeSpec instances.
         """
 
-        def __init__(self, name: str, kind: "TypeSpec.Kind"):
-            self.name = name
-            self.kind = kind
-            self.modifiers = set()
-            self.type_variables = []
-            self.superclass = None
-            self.superinterfaces = []
-            self.permitted_subclasses = []
-            self.javadoc = None
-            self.annotations = []
-            self.fields = []
-            self.methods = []
-            self.types = []
-            self.enum_constants = {}
-            self.record_components = []
+        # Private fields defined at the top
+        __name: str
+        __kind: "TypeSpec.Kind"
+        __modifiers: set[Modifier]
+        __type_variables: list[TypeVariableName]
+        __superclass_field: Optional[TypeName]
+        __superinterfaces: list[TypeName]
+        __permitted_subclasses: list[TypeName]
+        __javadoc: Optional[CodeBlock]
+        __annotations: list[AnnotationSpec]
+        __fields: list[FieldSpec]
+        __methods: list[MethodSpec]
+        __types: list["TypeSpec"]
+        __enum_constants: Dict[str, "TypeSpec"]
+        __record_components: list[Tuple[TypeName, str]]
+
+        def __init__(
+            self,
+            name: str,
+            kind: "TypeSpec.Kind",
+            modifiers: Optional[set[Modifier]] = None,
+            type_variables: Optional[list[TypeVariableName]] = None,
+            superclass: Optional[TypeName] = None,
+            superinterfaces: Optional[list[TypeName]] = None,
+            permitted_subclasses: Optional[list[TypeName]] = None,
+            javadoc: Optional[CodeBlock] = None,
+            annotations: Optional[list[AnnotationSpec]] = None,
+            fields: Optional[list[FieldSpec]] = None,
+            methods: Optional[list[MethodSpec]] = None,
+            types: Optional[list["TypeSpec"]] = None,
+            enum_constants: Optional[Dict[str, "TypeSpec"]] = None,
+            record_components: Optional[list[Tuple[TypeName, str]]] = None,
+        ):
+            self.__name = name
+            self.__kind = kind
+            self.__modifiers = modifiers or set()
+            self.__type_variables = type_variables or []
+            self.__superclass_field = superclass
+            self.__superinterfaces = superinterfaces or []
+            self.__permitted_subclasses = permitted_subclasses or []
+            self.__javadoc = javadoc
+            self.__annotations = annotations or []
+            self.__fields = fields or []
+            self.__methods = methods or []
+            self.__types = types or []
+            self.__enum_constants = enum_constants or {}
+            self.__record_components = record_components or []
 
         def add_modifiers(self, *modifiers: Modifier) -> "TypeSpec.Builder":
-            self.modifiers.update(modifiers)
+            self.__modifiers.update(modifiers)
             # Check if modifiers are valid for classes
-            Modifier.check_class_modifiers(self.modifiers)
+            Modifier.check_class_modifiers(self.__modifiers)
             return self
 
         def add_type_variable(self, type_variable: TypeVariableName) -> "TypeSpec.Builder":
-            self.type_variables.append(type_variable)
+            self.__type_variables.append(type_variable)
             return self
 
         def superclass(self, superclass: Union["TypeName", str, type]) -> "TypeSpec.Builder":
-            if self.kind == TypeSpec.Kind.INTERFACE or self.kind == TypeSpec.Kind.ANNOTATION:
+            if self.__kind == TypeSpec.Kind.INTERFACE or self.__kind == TypeSpec.Kind.ANNOTATION:
                 raise ValueError("Interfaces and annotations cannot have a superclass")
 
             if not isinstance(superclass, TypeName):
                 superclass = TypeName.get(superclass)
 
-            self.superclass = superclass
+            self.__superclass_field = superclass
             return self
 
         def add_superinterface(self, superinterface: Union["TypeName", str, type]) -> "TypeSpec.Builder":
             if not isinstance(superinterface, TypeName):
                 superinterface = TypeName.get(superinterface)
 
-            self.superinterfaces.append(superinterface)
+            self.__superinterfaces.append(superinterface)
             return self
 
         def add_permitted_subclass(self, subclass: Union["TypeName", str, type]) -> "TypeSpec.Builder":
             if not isinstance(subclass, TypeName):
                 subclass = TypeName.get(subclass)
 
-            self.permitted_subclasses.append(subclass)
+            self.__permitted_subclasses.append(subclass)
             return self
 
         def add_javadoc(self, format_string: str, *args) -> "TypeSpec.Builder":
-            self.javadoc = CodeBlock.of(format_string, *args)
+            self.__javadoc = CodeBlock.of(format_string, *args)
             return self
 
         def add_annotation(self, annotation_spec: AnnotationSpec) -> "TypeSpec.Builder":
-            self.annotations.append(annotation_spec)
+            self.__annotations.append(annotation_spec)
             return self
 
         def add_field(self, field_spec: FieldSpec) -> "TypeSpec.Builder":
-            self.fields.append(field_spec)
+            self.__fields.append(field_spec)
             return self
 
         def add_method(self, method_spec: MethodSpec) -> "TypeSpec.Builder":
-            # Set constructor name to class name
+            # set constructor name to class name
             if (
                 method_spec.kind == MethodSpec.Kind.CONSTRUCTOR
                 or method_spec.kind == MethodSpec.Kind.COMPACT_CONSTRUCTOR
@@ -375,61 +428,62 @@ class TypeSpec:
                     from copy import copy
 
                     new_method = copy(method_spec)
-                    new_method.name = self.name
+                    new_method.name = self.__name
                     method_spec = new_method
 
-            self.methods.append(method_spec)
+            self.__methods.append(method_spec)
             return self
 
         def add_type(self, type_spec: "TypeSpec") -> "TypeSpec.Builder":
-            self.types.append(type_spec)
+            self.__types.append(type_spec)
             return self
 
         def add_enum_constant(self, name: str) -> "TypeSpec.Builder":
-            if self.kind != TypeSpec.Kind.ENUM:
+            if self.__kind != TypeSpec.Kind.ENUM:
                 raise ValueError("Enum constants can only be added to enums")
 
             # Create a simple enum constant with no body
-            self.enum_constants[name] = TypeSpec(
+            self.__enum_constants[name] = TypeSpec(
                 "", TypeSpec.Kind.CLASS, set(), [], None, [], [], None, [], [], [], [], {}, []
             )
             return self
 
         def add_enum_constant_with_class_body(self, name: str, type_spec: "TypeSpec") -> "TypeSpec.Builder":
-            if self.kind != TypeSpec.Kind.ENUM:
+            if self.__kind != TypeSpec.Kind.ENUM:
                 raise ValueError("Enum constants can only be added to enums")
 
-            self.enum_constants[name] = type_spec
+            self.__enum_constants[name] = type_spec
             return self
 
         def add_record_component(self, type_name: Union["TypeName", str, type], name: str) -> "TypeSpec.Builder":
-            if self.kind != TypeSpec.Kind.RECORD:
+            if self.__kind != TypeSpec.Kind.RECORD:
                 raise ValueError("Record components can only be added to records")
 
             if not isinstance(type_name, TypeName):
                 type_name = TypeName.get(type_name)
 
-            self.record_components.append((type_name, name))
+            self.__record_components.append((type_name, name))
             return self
 
         def build(self) -> "TypeSpec":
             # Default superclass for enums
-            if self.kind == TypeSpec.Kind.ENUM and self.superclass is None:
-                self.superclass = ClassName.get("java.lang", "Enum").parameterized(ClassName.get("", self.name))
+            if self.__kind == TypeSpec.Kind.ENUM and self.__superclass_field is None:
+                # For now, just use a simple enum superclass without parameterization
+                self.__superclass_field = ClassName.get("java.lang", "Enum")
 
             return TypeSpec(
-                self.name,
-                self.kind,
-                self.modifiers.copy(),
-                self.type_variables.copy(),
-                self.superclass,
-                self.superinterfaces.copy(),
-                self.permitted_subclasses.copy(),
-                self.javadoc,
-                self.annotations.copy(),
-                self.fields.copy(),
-                self.methods.copy(),
-                self.types.copy(),
-                self.enum_constants.copy(),
-                self.record_components.copy(),
+                self.__name,
+                self.__kind,
+                deep_copy(self.__modifiers),
+                deep_copy(self.__type_variables),
+                deep_copy(self.__superclass_field),
+                deep_copy(self.__superinterfaces),
+                deep_copy(self.__permitted_subclasses),
+                deep_copy(self.__javadoc),
+                deep_copy(self.__annotations),
+                deep_copy(self.__fields),
+                deep_copy(self.__methods),
+                deep_copy(self.__types),
+                deep_copy(self.__enum_constants),
+                deep_copy(self.__record_components),
             )

@@ -125,7 +125,9 @@ class JavaFileTest(unittest.TestCase):
 
     def test_conflicting_parent_name(self):
         """Test conflicting names with parent class."""
-        type_spec = TypeSpec.class_builder("MyClass").superclass(ClassName.get("com.example.parent", "MyClass")).build()
+        type_spec = (
+            TypeSpec.class_builder("MyClass").__superclass(ClassName.get("com.example.parent", "MyClass")).build()
+        )
 
         java_file = JavaFile.builder("com.example.child", type_spec).build()
 
@@ -207,7 +209,7 @@ class JavaFileTest(unittest.TestCase):
         """Test nested class and superclass with same name."""
         nested = TypeSpec.class_builder("Parent").build()
         main_class = (
-            TypeSpec.class_builder("Child").superclass(ClassName.get("com.other", "Parent")).add_type(nested).build()
+            TypeSpec.class_builder("Child").__superclass(ClassName.get("com.other", "Parent")).add_type(nested).build()
         )
 
         java_file = JavaFile.builder("com.example", main_class).build()

@@ -74,7 +74,7 @@ public class TimeChecker {
             .begin_control_flow("try")
             .add_statement("throw new $T($S)", ClassName.get("java.lang", "Exception"), "Failed")
             .next_control_flow("catch ($T e)", ClassName.get("java.lang", "Exception"))
-            .add_statement("throw new $T(e)", ClassName.get("java.lang", "RuntimeException"))
+            .add_statement("throw new $T(e)", ClassName.get("com.example.error", "CustomException"))
             .end_control_flow()
             .build()
         )
@@ -94,15 +94,14 @@ public class TimeChecker {
         # Check the output
         expected = """package com.example.error;
 
-import java.lang.Exception;
-import java.lang.RuntimeException;
+import com.example.error.CustomException;
 
 public class ErrorHandler {
   public void unsafeOperation() {
     try {
       throw new Exception("Failed");
     } catch (Exception e) {
-      throw new RuntimeException(e);
+      throw new CustomException(e);
     }
   }
 }

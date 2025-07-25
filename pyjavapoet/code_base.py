@@ -16,6 +16,12 @@ class Code[C: "Code"](ABC):
     def copy(self) -> C:
         return self.to_builder().build()
     
+    def __deepcopy__(self, memo: dict) -> C:
+        return self.copy()
+    
+    def __copy__(self) -> C:
+        return self.copy()
+    
     def __str__(self) -> str:
         writer = CodeWriter()
         self.emit(writer)

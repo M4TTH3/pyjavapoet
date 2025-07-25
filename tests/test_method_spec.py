@@ -27,7 +27,7 @@ class MethodSpecTest(unittest.TestCase):
         )
 
         result = str(method)
-        self.assertEqual(result, "public String getName() {\n  return this.name;\n}")
+        self.assertEqual(result, "public String getName() {\n  return this.name;\n}\n")
 
     def test_method_with_parameters(self):
         """Test method with parameters."""
@@ -41,7 +41,7 @@ class MethodSpecTest(unittest.TestCase):
         )
 
         result = str(method)
-        self.assertEqual(result, "public void setName(String name) {\n  this.name = name;\n}")
+        self.assertEqual(result, "public void setName(String name) {\n  this.name = name;\n}\n")
 
     def test_method_with_javadoc(self):
         """Test method with javadoc."""
@@ -67,7 +67,8 @@ class MethodSpecTest(unittest.TestCase):
  * 
  * @param input the input value
  * @return the calculated result
- */""",
+ */
+""",
             result,
         )
 
@@ -122,7 +123,8 @@ class MethodSpecTest(unittest.TestCase):
 public String readFile(String filename) throws IOException, SecurityException {
   // implementation
   return null;
-}""",
+}
+""",
             result,
         )
 
@@ -143,7 +145,8 @@ public String readFile(String filename) throws IOException, SecurityException {
         expected = """\
 public static <T> T identity(T input) {
   return input;
-}"""
+}
+"""
         self.assertEqual(expected, result)
 
     def test_method_with_bounded_type_variables(self):
@@ -270,11 +273,12 @@ public static <T> T identity(T input) {
                   if (condition) {
                     doSomething();
                   }
-                }"""
+                }
+                """
             )
         )
 
-    def test_ensure_no_trailing_newline(self):
+    def test_ensure_trailing_newline(self):
         """Test that methods end with proper newlines."""
         method = (
             MethodSpec.method_builder("test")
@@ -285,7 +289,7 @@ public static <T> T identity(T input) {
         )
 
         result = str(method)
-        self.assertTrue(result.endswith("}"))
+        self.assertTrue(result.endswith("}\n"))
 
     def test_interface_method(self):
         """Test interface method (no body)."""

@@ -27,7 +27,7 @@ class CodeWriter:
     __out: list[str]
     __indent_level: int
     __line_start: bool
-    __imports: set[str]
+    __imports: set[ClassName]
 
     def __init__(self, indent: str = "  "):
         self.__indent = indent
@@ -80,8 +80,8 @@ class CodeWriter:
     def emit_type(self, type_name: "TypeName") -> None:
         if isinstance(type_name, ClassName):
             # Record that we need to import this type
-            if type_name.package_name and not type_name.ignore_package_name:
-                self.__imports.add(type_name.package_name)
+            if type_name.package_name:
+                self.__imports.add(type_name)
 
             self.emit(type_name.nested_name)
         else:
@@ -116,7 +116,7 @@ class CodeWriter:
         result: dict[str, set[str]] = {}
 
         for type_name in self.__imports:
-            if isinstance(type_name, ClassName) and type_name.package_name:
+            if type_name.package_name and not type_name.ignore_package_name:
                 package = type_name.package_name
                 if package not in result:
                     result[package] = set()

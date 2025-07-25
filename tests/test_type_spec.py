@@ -46,7 +46,7 @@ class TypeSpecTest(unittest.TestCase):
         """Test anonymous inner class creation."""
         anonymous = (
             TypeSpec.anonymous_class_builder("")
-            .add_super_interface(ClassName.get("java.lang", "Runnable"))
+            .add_superinterface(ClassName.get("java.lang", "Runnable"))
             .add_method(
                 MethodSpec.method_builder("run")
                 .add_annotation(AnnotationSpec.builder(ClassName.get("java.lang", "Override")).build())
@@ -287,7 +287,7 @@ class TypeSpecTest(unittest.TestCase):
         """Test class with superclass."""
         child = (
             TypeSpec.class_builder("Child")
-            .superclass(ClassName.get("com.example", "Parent"))
+            .__superclass(ClassName.get("com.example", "Parent"))
             .add_modifiers(Modifier.PUBLIC)
             .build()
         )
