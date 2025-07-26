@@ -34,7 +34,8 @@ class Modifier(Enum):
 
     @staticmethod
     def ordered_modifiers(modifiers: set["Modifier"]) -> list["Modifier"]:
-        # Java modifier order: public, protected, private, abstract, static, final, transient, volatile, synchronized, native, strictfp, sealed, non-sealed, default
+        # Java modifier order: public, protected, private, abstract, static, final,
+        # transient, volatile, synchronized, native, strictfp, sealed, non-sealed, default
         order = [
             Modifier.PUBLIC,
             Modifier.PROTECTED,

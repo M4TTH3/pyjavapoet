@@ -2,6 +2,7 @@
 Tests for utility functions.
 Equivalent to UtilTest.java
 """
+
 import unittest
 
 from pyjavapoet.util import is_ascii_upper
@@ -17,6 +18,7 @@ class UtilTest(unittest.TestCase):
         self.assertFalse(is_ascii_upper("123"))
         self.assertFalse(is_ascii_upper(""))
         self.assertFalse(is_ascii_upper(" "))
+
 
 if __name__ == "__main__":
     unittest.main()

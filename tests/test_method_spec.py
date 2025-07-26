@@ -275,7 +275,7 @@ public static <T> T identity(T input) {
                   }
                 }
                 """
-            )
+            ),
         )
 
     def test_ensure_trailing_newline(self):
@@ -376,7 +376,7 @@ public static <T> T identity(T input) {
 
         result = str(method)
         self.assertIn("@Nullable String name", result)
-    
+
     def test_method_with_type_variable_return_type(self):
         """Test method with type variable return type."""
         method = (

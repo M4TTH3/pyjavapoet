@@ -22,6 +22,7 @@ class CodeBlock(Code["CodeBlock"]):
 
     CodeBlock instances are immutable. Use the builder to create new instances.
     """
+
     format_parts: list[str]
     args: list[Any]
     named_args: dict[str, Any]
@@ -91,7 +92,7 @@ class CodeBlock(Code["CodeBlock"]):
                     else:
                         arg = self.args[arg_index]
                         arg_index += 1
-                    
+
                     if placeholder_type == "L":  # Literal
                         if isinstance(arg, CodeBlock):
                             arg.emit(code_writer, new_line_prefix)
@@ -113,7 +114,7 @@ class CodeBlock(Code["CodeBlock"]):
                             code_writer.emit(arg.name, new_line_prefix)
                         else:
                             code_writer.emit(str(arg), new_line_prefix)
-  
+
                 # Emit everything after the placeholder
                 if placeholder_match.end() < len(part):
                     code_writer.emit(part[placeholder_match.end() :], new_line_prefix)
@@ -130,7 +131,7 @@ class CodeBlock(Code["CodeBlock"]):
         writer = CodeWriter()
         self.emit_javadoc(writer)
         return str(writer)
-    
+
     def to_builder(self) -> "Builder":
         return CodeBlock.Builder(deep_copy(self.format_parts), deep_copy(self.args), deep_copy(self.named_args))
 
@@ -141,7 +142,7 @@ class CodeBlock(Code["CodeBlock"]):
     @staticmethod
     def builder() -> "Builder":
         return CodeBlock.Builder()
-    
+
     @staticmethod
     def join_to_code(code_blocks: list["CodeBlock"], separator: str = "") -> "CodeBlock":
         builder = CodeBlock.builder()
@@ -157,7 +158,7 @@ class CodeBlock(Code["CodeBlock"]):
             builder.add("$L", code_block)
 
         return builder.build()
-    
+
     @staticmethod
     def add_javadoc(javadoc: Optional["CodeBlock"], format_string: str, *args) -> "CodeBlock":
         if javadoc:
@@ -169,6 +170,7 @@ class CodeBlock(Code["CodeBlock"]):
         """
         Builder for CodeBlock instances.
         """
+
         format_parts: list[str]
         args: list[Any]
         named_args: dict[str, Any]
@@ -220,13 +222,13 @@ class CodeBlock(Code["CodeBlock"]):
             parts = format_string.split("\n")
             single_line = len(parts) == 1
             if not single_line:
-                statement = f"{parts[0]}\n$2>{"\n".join(part for part in parts[1:])};\n$2<"
+                statement = f"{parts[0]}\n$2>{'\n'.join(part for part in parts[1:])};\n$2<"
                 self.add(statement, *args, **kwargs)
             else:
                 self.add(format_string, *args, **kwargs)
                 self.add(";\n")
             return self
-        
+
         def add_comment(self, comment: str) -> "CodeBlock.Builder":
             self.add("// $L\n", comment)
             return self

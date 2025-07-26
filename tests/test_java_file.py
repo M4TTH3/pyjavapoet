@@ -115,7 +115,7 @@ class JavaFileTest(unittest.TestCase):
             .add_type(TypeSpec.class_builder("System").build())
             .add_method(
                 MethodSpec.method_builder("test")
-                .add_statement("$T.out.println($S)", ClassName.get("java.lang", "System"), "test")
+                .add_statement("$T.out.println($S)", system_class, "test")
                 .build()
             )
             .build()
@@ -239,15 +239,13 @@ class JavaFileTest(unittest.TestCase):
     def test_annotated_type_param(self):
         """Test annotated type parameters."""
         annotation = AnnotationSpec.builder(ClassName.get("javax.annotation", "Nullable")).build()
-        # This would test type parameter annotations, which is complex in Python
-        # For now, just test basic type parameter handling
         t_var = TypeVariableName.get("T")
-        type_spec = TypeSpec.class_builder("Container").add_type_variable(t_var).build()
+        type_spec = TypeSpec.class_builder("Container").add_type_variable(t_var).add_annotation(annotation).build()
 
         java_file = JavaFile.builder("com.example", type_spec).build()
 
         result = str(java_file)
-        self.assertIn("class Container<T>", result)
+        self.assertIn("@Nullable\nclass Container<T>", result)
 
     def test_static_import_conflicts_with_field(self):
         """Test static import conflicts with field names."""

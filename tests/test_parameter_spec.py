@@ -6,7 +6,6 @@ Equivalent to ParameterSpecTest.java
 import unittest
 
 from pyjavapoet.annotation_spec import AnnotationSpec
-from pyjavapoet.modifier import Modifier
 from pyjavapoet.parameter_spec import ParameterSpec
 from pyjavapoet.type_name import ClassName
 
@@ -30,9 +29,7 @@ class ParameterSpecTest(unittest.TestCase):
 
     def test_parameter_with_modifiers(self):
         """Test parameter with modifiers."""
-        param = (
-            ParameterSpec.builder(ClassName.get("java.lang", "String"), "value").add_final().build()
-        )
+        param = ParameterSpec.builder(ClassName.get("java.lang", "String"), "value").add_final().build()
 
         result = str(param)
         self.assertEqual(result, "final String value")
@@ -104,9 +101,7 @@ class ParameterSpecTest(unittest.TestCase):
 
     def test_parameter_to_builder(self):
         """Test parameter to builder conversion."""
-        original = (
-            ParameterSpec.builder(ClassName.get("java.lang", "String"), "value").add_final().build()
-        )
+        original = ParameterSpec.builder(ClassName.get("java.lang", "String"), "value").add_final().build()
 
         annotation = AnnotationSpec.builder(ClassName.get("javax.annotation", "Nullable")).build()
         modified = original.to_builder().add_annotation(annotation).build()
@@ -120,9 +115,7 @@ class ParameterSpecTest(unittest.TestCase):
 
     def test_final_parameter(self):
         """Test final parameter."""
-        param = (
-            ParameterSpec.builder(ClassName.get("java.lang", "String"), "value").add_final().build()
-        )
+        param = ParameterSpec.builder(ClassName.get("java.lang", "String"), "value").add_final().build()
 
         result = str(param)
         self.assertEqual(result, "final String value")

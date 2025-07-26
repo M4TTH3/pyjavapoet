@@ -225,7 +225,7 @@ class MethodSpec(Code["MethodSpec"]):
                 parameter = ParameterSpec.builder(parameter_spec, name)
 
             if final:
-                    parameter.add_final()
+                parameter.add_final()
             self.__parameters.append(parameter.build())
             return self
 

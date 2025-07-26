@@ -308,7 +308,9 @@ class ClassNameTest(unittest.TestCase):
         """Test type parameter conversion."""
         self.assertEqual(ClassName.get("java.lang", "Boolean").to_type_param(), ClassName.get("java.lang", "Boolean"))
         self.assertEqual(ClassName.get("java.lang", "Byte").to_type_param(), ClassName.get("java.lang", "Byte"))
-        self.assertEqual(ClassName.get("java.lang", "Character").to_type_param(), ClassName.get("java.lang", "Character"))
+        self.assertEqual(
+            ClassName.get("java.lang", "Character").to_type_param(), ClassName.get("java.lang", "Character")
+        )
         self.assertEqual(ClassName.get("java.lang", "Double").to_type_param(), ClassName.get("java.lang", "Double"))
         self.assertEqual(ClassName.get("java.lang", "Float").to_type_param(), ClassName.get("java.lang", "Float"))
 
@@ -324,6 +326,7 @@ class ClassNameTest(unittest.TestCase):
         self.assertEqual(ClassName.get("java.util", "Map", "Entry").nested_name, "Map.Entry")
         self.assertEqual(ClassName.get("", "Foo", "Bar", "Baz").nested_name, "Foo.Bar.Baz")
         self.assertEqual(ClassName.get("a.b.c", "Foo", "Bar", "Baz").nested_name, "Foo.Bar.Baz")
+
 
 if __name__ == "__main__":
     unittest.main()

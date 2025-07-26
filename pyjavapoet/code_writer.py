@@ -15,7 +15,9 @@ class Constant(str):
     def __new__(cls, value: str):
         return str.__new__(cls, value)
 
+
 EMPTY_STRING = Constant("")
+
 
 class CodeWriter:
     """
@@ -23,7 +25,7 @@ class CodeWriter:
     """
 
     __indent: str
-    __max_line_length: int # TODO
+    __max_line_length: int  # TODO
     __out: list[str]
     __indent_level: int
     __line_start: bool

@@ -49,7 +49,6 @@ class AnnotationSpecTest(unittest.TestCase):
         builder = AnnotationSpec.builder(ClassName.get("com.example", "HasDefaultsAnnotation"))
         builder.add_member("n", "$T.$L", breakfast_class, "PANCAKES")
 
-
         result = str(builder.build())
         expected_part = "Breakfast.PANCAKES"
 

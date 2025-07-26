@@ -13,7 +13,7 @@ from util import deep_copy, throw_if_invalid_java_identifier
 
 from pyjavapoet.annotation_spec import AnnotationSpec
 from pyjavapoet.modifier import Modifier
-from pyjavapoet.type_name import ArrayTypeName, ParameterizedTypeName, TypeName, TypeVariableName
+from pyjavapoet.type_name import ArrayTypeName, TypeName, TypeVariableName
 
 if TYPE_CHECKING:
     from pyjavapoet.code_writer import CodeWriter
@@ -68,7 +68,7 @@ class ParameterSpec(Code["ParameterSpec"]):
         # Emit name
         code_writer.emit(" ")
         code_writer.emit(self.name)
-    
+
     def to_builder(self) -> "ParameterSpec.Builder":
         return ParameterSpec.Builder(self.type_name, self.name, self.modifiers, self.annotations, self.varargs)
 

@@ -13,6 +13,7 @@ from pyjavapoet.type_name import ClassName
 
 class MockNamed:
     """Mock class with a name attribute for testing $N placeholders."""
+
     def __init__(self, name):
         self.name = name
 
@@ -72,15 +73,15 @@ class CodeBlockTest(unittest.TestCase):
         # Test $L (literal)
         block = CodeBlock.of("$L", "hello")
         self.assertEqual(str(block), "hello")
-        
+
         # Test $S (string)
         block = CodeBlock.of("$S", "hello")
         self.assertEqual(str(block), '"hello"')
-        
+
         # Test $T (type) - basic case
         block = CodeBlock.of("$T", "String")
         self.assertEqual(str(block), "String")
-        
+
         # Test $N (name)
         block = CodeBlock.of("$N", MockNamed("myVar"))
         self.assertEqual(str(block), "myVar")
@@ -89,7 +90,7 @@ class CodeBlockTest(unittest.TestCase):
         """Test that string placeholders properly escape special characters."""
         block = CodeBlock.of("$S", 'hello "world"')
         self.assertEqual(str(block), '"hello \\"world\\""')
-        
+
         block = CodeBlock.of("$S", "hello\\world")
         self.assertEqual(str(block), '"hello\\\\world"')
 
@@ -117,9 +118,7 @@ class CodeBlockTest(unittest.TestCase):
 
     def test_statement_has_indentation(self):
         """Test that statement has indentation."""
-        block = CodeBlock.builder() \
-            .add_statement("return StringBuilder\n.of($S)\n.toString()", "hello") \
-            .build()
+        block = CodeBlock.builder().add_statement("return StringBuilder\n.of($S)\n.toString()", "hello").build()
         self.assertEqual(str(block), 'return StringBuilder\n    .of("hello")\n    .toString();\n')
 
     def test_add_statement(self):
@@ -157,13 +156,7 @@ class CodeBlockTest(unittest.TestCase):
 
     def test_manual_indentation(self):
         """Test manual indentation."""
-        block = (CodeBlock.builder()
-                .add("start\n")
-                .add("$>")
-                .add("middle\n")
-                .add("$<")
-                .add("end\n")
-                .build())
+        block = CodeBlock.builder().add("start\n").add("$>").add("middle\n").add("$<").add("end\n").build()
 
         expected = "start\n  middle\nend\n"
         self.assertEqual(str(block), expected)
@@ -199,11 +192,7 @@ class CodeBlockTest(unittest.TestCase):
 
     def test_builder_chaining(self):
         """Test that builder methods can be chained."""
-        block = (CodeBlock.builder()
-                .add("first")
-                .add(" second")
-                .add(" third")
-                .build())
+        block = CodeBlock.builder().add("first").add(" second").add(" third").build()
         self.assertEqual(str(block), "first second third")
 
     def test_empty_code_block(self):
@@ -221,7 +210,7 @@ class CodeBlockTest(unittest.TestCase):
         # This should not raise an exception
         pattern = CodeBlock.placeholder_match
         self.assertIsNotNone(pattern)
-        
+
         # Test that it can match basic patterns
         test_string = "$L $S $T $N"
         matches = pattern.findall(test_string)
@@ -238,7 +227,7 @@ class CodeBlockTest(unittest.TestCase):
         """Test $L placeholder with numbers."""
         block = CodeBlock.of("$L", 42)
         self.assertEqual(str(block), "42")
-        
+
         block = CodeBlock.of("$L", 3.14)
         self.assertEqual(str(block), "3.14")
 
@@ -278,22 +267,16 @@ class CodeBlockTest(unittest.TestCase):
             .end_control_flow()
             .build()
         )
-        
-        expected = ('if (condition1) {\n'
-                   '  if (condition2) {\n'
-                   '    doSomething();\n'
-                   '  }\n'
-                   '} else {\n'
-                   '  doSomethingElse();\n'
-                   '}\n')
+
+        expected = (
+            "if (condition1) {\n  if (condition2) {\n    doSomething();\n  }\n} else {\n  doSomethingElse();\n}\n"
+        )
         self.assertEqual(str(block), expected)
 
     def test_multiline_statements(self):
         """Test multiline statement formatting."""
-        block = CodeBlock.builder().add_statement(
-            "System.out.println(\n$S\n)", "Hello, World!"
-        ).build()
-        
+        block = CodeBlock.builder().add_statement("System.out.println(\n$S\n)", "Hello, World!").build()
+
         expected = 'System.out.println(\n    "Hello, World!"\n    );\n'
         self.assertEqual(str(block), expected)
 
@@ -310,6 +293,7 @@ class CodeBlockTest(unittest.TestCase):
         writer = CodeWriter()
         block.emit_javadoc(writer)
         self.assertEqual(str(writer), "/**\n * Hello, World!\n * Hello, World!\n */")
+
 
 if __name__ == "__main__":
     unittest.main()

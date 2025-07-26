@@ -21,10 +21,12 @@ if TYPE_CHECKING:
 
 JAVA_LANG_PACKAGE = "java.lang"
 
+
 class TypeName(ABC):
     """
     Base class for types in Java's type system.
     """
+
     INTEGER: "ClassName"
     LONG: "ClassName"
     DOUBLE: "ClassName"
@@ -63,14 +65,14 @@ class TypeName(ABC):
         "Void",
     }
 
-    ALL_PRIMITIVE_TYPES = {
-        "Object": JAVA_LANG_PACKAGE,
-        "String": JAVA_LANG_PACKAGE,
-    } | { 
-        t: None for t in PRIMITIVE_TYPES.values() 
-    } | {
-        t: JAVA_LANG_PACKAGE for t in BOXED_PRIMITIVE_TYPES
-    }
+    ALL_PRIMITIVE_TYPES = (
+        {
+            "Object": JAVA_LANG_PACKAGE,
+            "String": JAVA_LANG_PACKAGE,
+        }
+        | {t: None for t in PRIMITIVE_TYPES.values()}
+        | {t: JAVA_LANG_PACKAGE for t in BOXED_PRIMITIVE_TYPES}
+    )
 
     def __init__(self, annotations: list["AnnotationSpec"] | None = None):
         self.annotations = annotations or []
@@ -94,22 +96,18 @@ class TypeName(ABC):
         writer = CodeWriter()
         self.emit(writer)
         return str(writer)
-    
+
     def __eq__(self, other) -> bool:
         if not isinstance(other, TypeName):
             return False
         return str(self) == str(other)
-    
+
     def __hash__(self) -> int:
         return hash(str(self))
-    
+
     def is_primitive(self) -> bool:
-        return (
-            isinstance(self, ClassName)
-            and not self.package_name
-            and self.simple_name in TypeName.PRIMITIVE_TYPES
-        )
-    
+        return isinstance(self, ClassName) and not self.package_name and self.simple_name in TypeName.PRIMITIVE_TYPES
+
     def is_boxed_primitive(self) -> bool:
         return (
             isinstance(self, ClassName)
@@ -153,6 +151,7 @@ class TypeName(ABC):
                 # Default to Java Object for other Python types
                 return TypeName.OBJECT
 
+
 class ClassName(TypeName):
     package_name: str
     simple_names: list[str]
@@ -178,37 +177,37 @@ class ClassName(TypeName):
 
     def copy(self) -> "ClassName":
         return ClassName(self.package_name, deep_copy(self.simple_names), deep_copy(self.annotations))
-    
+
     def nested_class(self, *simple_names: str) -> "ClassName":
         return ClassName(self.package_name, self.simple_names + list(simple_names))
-    
+
     def peer_class(self, *simple_names: str) -> "ClassName":
         return ClassName(self.package_name, self.simple_names[:-1] + list(simple_names))
-    
+
     def with_type_arguments(self, *type_arguments: Union["TypeName", str, type]) -> "ParameterizedTypeName":
         return ParameterizedTypeName(self, [TypeName.get(arg) for arg in type_arguments])
-    
+
     def array(self) -> "ArrayTypeName":
         """Return an array type with this class as the component type."""
         return ArrayTypeName(self)
-    
+
     def to_type_param(self) -> "TypeName":
         if self.is_primitive():
             return ClassName(self.package_name, [TypeName.PRIMITIVE_TYPES[self.simple_name]])
         return self
-    
+
     @property
     def reflection_name(self) -> str:
         if not self.package_name:
             return "$".join(self.simple_names)
         return self.package_name + "." + "$".join(self.simple_names)
-    
+
     @property
     def enclosing_class_name(self) -> Optional["ClassName"]:
         if len(self.simple_names) == 1:
             return None
         return ClassName(self.package_name, self.simple_names[:-1])
-    
+
     @property
     def top_level_class_name(self) -> "ClassName":
         if not self.package_name:
@@ -228,7 +227,7 @@ class ClassName(TypeName):
         if not self.package_name:
             return ".".join(self.simple_names)
         return f"{self.package_name}.{self.nested_name}"
-    
+
     def __str__(self) -> str:
         return self.canonical_name
 
@@ -298,6 +297,7 @@ class ArrayTypeName(TypeName):
     def of(component_type: Union["TypeName", str, type]) -> "ArrayTypeName":
         return ArrayTypeName(TypeName.get(component_type))
 
+
 class ParameterizedTypeName(TypeName):
     """
     Represents a parameterized type like List<String>.
@@ -347,7 +347,7 @@ class ParameterizedTypeName(TypeName):
             deep_copy(self.owner_type),
             deep_copy(self.annotations),
         )
-    
+
     def nested_class(self, *simple_names: str) -> "ParameterizedTypeName":
         return ParameterizedTypeName(
             self.raw_type.nested_class(*simple_names),
@@ -468,6 +468,7 @@ class WildcardTypeName(TypeName):
     @staticmethod
     def supertypes_of(*lower_bounds: Union["TypeName", str, type]) -> "WildcardTypeName":
         return WildcardTypeName(lower_bounds=[TypeName.get(bound) for bound in lower_bounds])
+
 
 TypeName.INTEGER = ClassName.get("", "Integer")
 TypeName.LONG = ClassName.get("", "Long")

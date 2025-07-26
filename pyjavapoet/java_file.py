@@ -5,8 +5,8 @@ This module defines the JavaFile class, which is used to generate
 Java source files with proper package declarations, imports, and type declarations.
 """
 
-from io import StringIO
 import sys
+from io import StringIO
 from pathlib import Path
 from typing import Optional, TextIO, Union
 
@@ -136,7 +136,7 @@ class JavaFile(Code["JavaFile"]):
             self.indent,
             self.static_imports,
         )
-    
+
     def __str__(self) -> str:
         with StringIO() as sio:
             self.emit_to(sio)
