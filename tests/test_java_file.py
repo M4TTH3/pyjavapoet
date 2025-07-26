@@ -88,7 +88,6 @@ class JavaFileTest(unittest.TestCase):
 
     def test_conflicting_imports(self):
         """Test handling of conflicting imports."""
-        self.skipTest("TODO: Add this feature in")
         awt_list = ClassName.get("java.awt", "List")
         util_list = ClassName.get("java.util", "List")
 
@@ -108,11 +107,9 @@ class JavaFileTest(unittest.TestCase):
 
     def test_skip_java_lang_imports_with_conflicting_class_names(self):
         """Test that java.lang imports are skipped when there's a naming conflict."""
-        self.skipTest("TODO: Add this feature in")
-        system_class = ClassName.get("com.example", "System")
+        system_class = ClassName.get("java.lang", "System")
         type_spec = (
-            TypeSpec.class_builder("Test")
-            .add_type(TypeSpec.class_builder("System").build())
+            TypeSpec.class_builder("System")
             .add_method(
                 MethodSpec.method_builder("test")
                 .add_statement("$T.out.println($S)", system_class, "test")
@@ -124,6 +121,7 @@ class JavaFileTest(unittest.TestCase):
         java_file = JavaFile.builder("com.example", type_spec).build()
 
         result = str(java_file)
+        print(result)
         # Should use fully qualified name for java.lang.System due to conflict
         self.assertIn("java.lang.System.out.println", result)
 

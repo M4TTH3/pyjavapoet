@@ -106,13 +106,17 @@ class TypeName(ABC):
         return hash(str(self))
 
     def is_primitive(self) -> bool:
-        return isinstance(self, ClassName) and not self.package_name and self.simple_name in TypeName.PRIMITIVE_TYPES
+        return (
+            isinstance(self, ClassName)
+            and not self.package_name
+            and ClassName.strip_simple_name(self.simple_name) in TypeName.PRIMITIVE_TYPES
+        )
 
     def is_boxed_primitive(self) -> bool:
         return (
             isinstance(self, ClassName)
             and self.package_name == JAVA_LANG_PACKAGE
-            and self.simple_name in TypeName.BOXED_PRIMITIVE_TYPES
+            and ClassName.strip_simple_name(self.simple_name) in TypeName.BOXED_PRIMITIVE_TYPES
         )
 
     @staticmethod
@@ -122,7 +126,7 @@ class TypeName(ABC):
 
         if isinstance(type_mirror_or_name, str):
             # Check if it's a primitive type
-            if type_mirror_or_name in TypeName.ALL_PRIMITIVE_TYPES:
+            if ClassName.strip_simple_name(type_mirror_or_name) in TypeName.ALL_PRIMITIVE_TYPES:
                 # Create primitive type
                 return ClassName.get("", type_mirror_or_name)
 
@@ -219,6 +223,10 @@ class ClassName(TypeName):
         return self.simple_names[-1]
 
     @property
+    def top_simple_name(self) -> str:
+        return self.simple_names[0]
+
+    @property
     def nested_name(self) -> str:
         return ".".join(self.simple_names)
 
@@ -232,6 +240,14 @@ class ClassName(TypeName):
         return self.canonical_name
 
     @staticmethod
+    def strip_simple_name(simple_name: str) -> str:
+        if simple_name.endswith("[]"):
+            return simple_name[:-2]
+        elif simple_name.endswith("..."):
+            return simple_name[:-3]
+        return simple_name
+
+    @staticmethod
     def get(package_name: str, *simple_names: str) -> "ClassName":
         # Handle nested classes
         all_simple_names = []
@@ -242,7 +258,8 @@ class ClassName(TypeName):
                 all_simple_names.append(simple_name)
 
         if not package_name and len(simple_names) == 1:
-            if pkg_name := TypeName.ALL_PRIMITIVE_TYPES.get(simple_names[0]):
+            stripped_simple_name = ClassName.strip_simple_name(simple_names[0])
+            if pkg_name := TypeName.ALL_PRIMITIVE_TYPES.get(stripped_simple_name):
                 package_name = pkg_name
 
         return ClassName(package_name, all_simple_names)

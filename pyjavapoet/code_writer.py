@@ -6,7 +6,7 @@ This module defines:
 - CodeWriter: Handles emitting Java code with proper formatting
 """
 
-from typing import Literal
+from typing import Annotated, Literal
 
 from pyjavapoet.type_name import ClassName, TypeName
 
@@ -29,16 +29,24 @@ class CodeWriter:
     __out: list[str]
     __indent_level: int
     __line_start: bool
-    __imports: set[ClassName]
+    __type_spec_class_name: ClassName | None
 
-    def __init__(self, indent: str = "  "):
+    # Track ClassNames that have been used. If it maps to a None that means
+    # it's a part of the current package.
+    __imports: dict[Annotated[str, "top_level_simple_name"], ClassName]
+
+    def __init__(self, indent: str = "  ", type_spec_class_name: ClassName | None = None):
         self.__indent = indent
         self.__out = []  # Output buffer
         self.__indent_level = 0
         self.__line_start = True  # Are we at the start of a line?
+        self.__type_spec_class_name = type_spec_class_name
 
         # Imports tracking
-        self.__imports = set()  # Set of imports that must be added
+        if type_spec_class_name:
+            self.__imports = {type_spec_class_name.top_simple_name: type_spec_class_name}
+        else:
+            self.__imports = {}
 
     def indent(self, count: int = 1) -> None:
         self.__indent_level += count
@@ -83,9 +91,14 @@ class CodeWriter:
         if isinstance(type_name, ClassName):
             # Record that we need to import this type
             if type_name.package_name:
-                self.__imports.add(type_name)
-
-            self.emit(type_name.nested_name)
+                class_name = self.__imports.get(type_name.top_simple_name)
+                if not class_name or type_name == class_name:
+                    self.emit(type_name.nested_name)
+                    self.__imports[type_name.top_simple_name] = type_name
+                else:
+                    self.emit(type_name.canonical_name)
+            else:
+                self.emit(type_name.nested_name)
         else:
             type_name.emit(self)
 
@@ -117,12 +130,17 @@ class CodeWriter:
     def get_imports(self) -> dict[str, set[str]]:
         result: dict[str, set[str]] = {}
 
-        for type_name in self.__imports:
-            if type_name.package_name and not type_name.ignore_package_name:
-                package = type_name.package_name
-                if package not in result:
-                    result[package] = set()
-                result[package].add(type_name.simple_name)
+        for type_name in self.__imports.values():
+            package = type_name.package_name
+            if (
+                type_name.ignore_package_name
+                or (self.__type_spec_class_name and package == self.__type_spec_class_name.package_name)
+            ):
+                continue
+
+            if package not in result:
+                result[package] = set()
+            result[package].add(type_name.simple_name)
 
         return result
 

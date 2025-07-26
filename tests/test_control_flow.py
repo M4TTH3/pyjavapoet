@@ -94,7 +94,6 @@ public class TimeChecker {
         # Check the output
         expected = """package com.example.error;
 
-
 public class ErrorHandler {
   public void unsafeOperation() {
     try {

@@ -72,7 +72,10 @@ class JavaFile(Code["JavaFile"]):
 
     def emit_to(self, out: TextIO) -> None:
         # Create a CodeWriter for generating the file
-        writer = CodeWriter(indent=self.indent)
+        writer = CodeWriter(
+            indent=self.indent,
+            type_spec_class_name=ClassName.get(self.package_name, self.type_spec.name),
+        )
         # Emit the file
         self.emit(writer)
         # Write to the output
@@ -88,7 +91,10 @@ class JavaFile(Code["JavaFile"]):
             code_writer.emit(f"package {self.package_name};\n\n")
 
         # Do a first pass to collect imports
-        import_collector = CodeWriter(indent=self.indent)
+        import_collector = CodeWriter(
+            indent=self.indent, 
+            type_spec_class_name=ClassName.get(self.package_name, self.type_spec.name),
+        )
         self.type_spec.emit(import_collector)
 
         # Get the imports

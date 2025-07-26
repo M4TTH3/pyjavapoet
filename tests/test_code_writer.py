@@ -6,6 +6,7 @@ Equivalent to CodeWriterTest.java
 import unittest
 
 from pyjavapoet.code_writer import CodeWriter
+from pyjavapoet.type_name import ClassName
 
 
 class CodeWriterTest(unittest.TestCase):
@@ -56,6 +57,64 @@ class CodeWriterTest(unittest.TestCase):
         result = str(writer)
         expected = "public class Test {\n\tprivate String name;\n}\n"
         self.assertEqual(result, expected)
+
+    def test_emit_type_with_imports_and_package_name(self):
+        """Test that emit_type uses imports and package_name correctly."""
+        writer = CodeWriter(type_spec_class_name=ClassName.get("foo", "Test"))
+
+        bar_Baz = ClassName.get("bar", "Baz")
+        foo_Qux = ClassName.get("foo", "Qux")
+
+        # First use: should record import for bar.Baz and emit 'Baz'
+        writer.emit_type(bar_Baz)
+        writer.emit(" a;\n")
+
+        # Second use: should emit 'Baz' again (imported)
+        writer.emit_type(bar_Baz)
+        writer.emit(" b;\n")
+
+        # Use a class from the same package: should emit just 'Qux'
+        writer.emit_type(foo_Qux)
+        writer.emit(" c;\n")
+
+        result = str(writer)
+        # Both uses of bar.Baz should emit 'Baz', not 'bar.Baz'
+        self.assertIn("Baz a;", result)
+        self.assertIn("Baz b;", result)
+        self.assertIn("Qux c;", result)
+        self.assertNotIn("bar.Baz", result)
+
+        # The import should be recorded for bar.Baz, but not for foo.Qux
+        imports = writer.get_imports()
+        self.assertIn("bar", imports)
+        self.assertIn("Baz", imports["bar"])
+        self.assertNotIn("foo", imports)
+
+    def test_emit_type_with_same_classname_different_packages(self):
+        """Test that emit_type distinguishes between same class name in different packages."""
+        writer = CodeWriter(type_spec_class_name=ClassName.get("foo", "Test"))
+
+        bar_Baz = ClassName.get("bar", "Baz")
+        qux_Baz = ClassName.get("qux", "Baz")
+
+        # First use: should record import for bar.Baz and emit 'Baz'
+        writer.emit_type(bar_Baz)
+        writer.emit(" a;\n")
+
+        # Second use: should record import for qux.Baz and emit 'qux.Baz'
+        writer.emit_type(qux_Baz)
+        writer.emit(" b;\n")
+
+        result = str(writer)
+        # The first should emit 'Baz a;', the second should emit 'qux.Baz b;'
+        self.assertIn("Baz a;", result)
+        self.assertIn("qux.Baz b;", result)
+
+        # The imports should include both bar.Baz and qux.Baz
+        imports = writer.get_imports()
+        self.assertIn("bar", imports)
+        self.assertIn("Baz", imports["bar"])
+        self.assertNotIn("qux", imports)
 
 
 if __name__ == "__main__":
