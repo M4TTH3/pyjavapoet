@@ -42,7 +42,10 @@ def main():
 
     # Create a counter field
     counter_field = (
-        FieldSpec.builder(TypeName.get("int"), "processCount").add_modifiers(Modifier.PRIVATE).initializer("0").build()
+        FieldSpec.builder(TypeName.get("int"), "processCount")
+        .add_modifiers(Modifier.PRIVATE)
+        .initializer("0")
+        .build()
     )
 
     # Create a constructor
@@ -54,6 +57,8 @@ def main():
         .build()
     )
 
+    function_class = ParameterizedTypeName.get(ClassName.get("java.util.function", "Function"), t, r)
+
     # Create a process method
     process_method = (
         MethodSpec.method_builder("process")
@@ -62,7 +67,7 @@ def main():
         .add_type_variable(r)
         .returns(ParameterizedTypeName.get(list_class, r))
         .add_parameter(ParameterizedTypeName.get(list_class, t), "input")
-        .add_parameter("java.util.function.Function<T, R>", "transformer")
+        .add_parameter(function_class, "transformer")
         .add_statement("$T<$T> result = new $T<>()", list_class, r, array_list_class)
         .begin_control_flow("for ($T item : input)", t)
         .add_statement("result.add(transformer.apply(item))")
@@ -78,7 +83,7 @@ def main():
         .add_annotation(AnnotationSpec.get(override_annotation))
         .add_modifiers(Modifier.PUBLIC)
         .returns(TypeName.STRING)
-        .add_statement("return $S + name + $S + processCount", "DataProcessor{name='", "', processCount=")
+        .add_statement("return $S + name + $S + processCount + $S", "DataProcessor{name='", "', processCount=", "}")
         .build()
     )
 

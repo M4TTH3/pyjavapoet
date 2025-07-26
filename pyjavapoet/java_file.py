@@ -85,6 +85,7 @@ class JavaFile(Code["JavaFile"]):
         # Emit file comment
         if self.file_comment is not None:
             self.file_comment.emit_javadoc(code_writer)
+            code_writer.emit("\n")
 
         # Emit package declaration
         if self.package_name:

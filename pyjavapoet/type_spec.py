@@ -432,12 +432,8 @@ class TypeSpec(Code["TypeSpec"]):
 
         def add_method(self, method_spec: MethodSpec) -> "TypeSpec.Builder":
             # set constructor name to class name
-            if (
-                method_spec.kind == MethodSpec.Kind.CONSTRUCTOR
-                or method_spec.kind == MethodSpec.Kind.COMPACT_CONSTRUCTOR
-            ):
-                if not method_spec.name:
-                    method_spec = method_spec.to_builder().set_name(self.__name).build()
+            if method_spec.kind in (MethodSpec.Kind.CONSTRUCTOR, MethodSpec.Kind.COMPACT_CONSTRUCTOR):
+                method_spec = method_spec.to_builder().set_name(self.__name).build()
 
             self.__methods.append(method_spec)
             return self

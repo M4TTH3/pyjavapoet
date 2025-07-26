@@ -7,3 +7,5 @@
 5. Name Allocator if we so desire (?)
 6. Annotation member has to be valid java identifier
 7. Multiple imports with same ClassName should use package name
+8. Handle primitive types better in ClassName i.e. validation
+9. Improve tests with exact output strings and also slim down unneeded tests

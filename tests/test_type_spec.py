@@ -82,8 +82,7 @@ class TypeSpecTest(unittest.TestCase):
         taco = TypeSpec.class_builder("Taco").add_method(constructor).build()
 
         result = str(taco)
-        self.assertIn("@Named", result)
-        self.assertIn('"foobar"', result)
+        self.assertIn('public Taco(@Named("foobar") Service service)', result)
 
     def test_annotated_field(self):
         """Test field with annotations."""
@@ -354,7 +353,7 @@ class TypeSpecTest(unittest.TestCase):
         clazz = TypeSpec.class_builder("MyClass").add_modifiers(Modifier.PUBLIC).add_method(constructor).build()
 
         result = str(clazz)
-        self.assertIn("public <init>(String name)", result)
+        self.assertIn("public MyClass(String name)", result)
 
     def test_class_with_javadoc(self):
         """Test class with javadoc."""
@@ -381,18 +380,6 @@ class TypeSpecTest(unittest.TestCase):
         b = TypeSpec.class_builder("Test").build()
         self.assertEqual(a, b)
         self.assertEqual(hash(a), hash(b))
-
-    def test_to_builder(self):
-        """Test TypeSpec to builder conversion."""
-        # TODO: Implement to_builder method on TypeSpec
-        self.skipTest("to_builder method not implemented yet")
-        # original = TypeSpec.class_builder("Original").add_modifiers(Modifier.PUBLIC).build()
-        # modified = original.to_builder().add_modifiers(Modifier.FINAL).build()
-        # original_str = str(original)
-        # modified_str = str(modified)
-        # self.assertNotIn("final", original_str)
-        # self.assertIn("final", modified_str)
-        # self.assertIn("public", modified_str)
 
     def test_empty_class(self):
         """Test completely empty class."""
