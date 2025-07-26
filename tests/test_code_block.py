@@ -3,7 +3,6 @@ Tests for CodeBlock functionality.
 Equivalent to CodeBlockTest.java
 """
 
-from io import StringIO
 import unittest
 
 from code_writer import CodeWriter

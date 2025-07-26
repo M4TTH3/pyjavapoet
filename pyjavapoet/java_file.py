@@ -5,17 +5,19 @@ This module defines the JavaFile class, which is used to generate
 Java source files with proper package declarations, imports, and type declarations.
 """
 
-import os
+from io import StringIO
 import sys
-from typing import Dict, Optional, Set, TextIO, Union
+from pathlib import Path
+from typing import Optional, TextIO, Union
 
+from pyjavapoet.code_base import Code
 from pyjavapoet.code_block import CodeBlock
-from pyjavapoet.code_writer import CodeWriter
+from pyjavapoet.code_writer import EMPTY_STRING, CodeWriter
 from pyjavapoet.type_name import ClassName
 from pyjavapoet.type_spec import TypeSpec
 
 
-class JavaFile:
+class JavaFile(Code["JavaFile"]):
     """
     Represents a Java source file.
 
@@ -27,24 +29,41 @@ class JavaFile:
         package_name: str,
         type_spec: TypeSpec,
         file_comment: Optional[CodeBlock],
-        skip_java_lang_imports: bool,
         indent: str,
-        static_imports: Dict[ClassName, Set[str]],
+        static_imports: dict[ClassName, set[str]],
     ):
         self.package_name = package_name
         self.type_spec = type_spec
         self.file_comment = file_comment
-        self.skip_java_lang_imports = skip_java_lang_imports
         self.indent = indent
         self.static_imports = static_imports
 
-    def write_to(self, out: Union[str, TextIO, None] = None) -> None:
+    def write_to_dir(self, java_dir: Path) -> Path:
+        """
+        Pass in the directory to write the file to using the relative path.
+        i.e. java_dir = Path("src/main/java")
+        """
+        relative_path = self.get_relative_path()
+        file_path = java_dir / relative_path
+        self.write_to(file_path)
+        return file_path
+
+    def write_to(self, out: Union[str, Path, TextIO, None] = None) -> None:
+        """
+        out: str | Path | TextIO | None
+        If None, write to stdout.
+        If str or Path, write to file.
+        If TextIO, write to file-like object.
+        """
         if out is None:
             # Write to stdout
             self.emit_to(sys.stdout)
-        elif isinstance(out, str):
+        elif isinstance(out, (str, Path)):
             # Write to file path
-            os.makedirs(os.path.dirname(os.path.abspath(out)), exist_ok=True)
+            out = Path(out)
+            if parent := out.parent:
+                parent.mkdir(parents=True, exist_ok=True)
+
             with open(out, "w") as f:
                 self.emit_to(f)
         else:
@@ -54,20 +73,15 @@ class JavaFile:
     def emit_to(self, out: TextIO) -> None:
         # Create a CodeWriter for generating the file
         writer = CodeWriter(indent=self.indent)
-
         # Emit the file
-        self.emit_file(writer)
-
+        self.emit(writer)
         # Write to the output
         out.write(str(writer))
 
-    def emit_file(self, code_writer: CodeWriter) -> None:
+    def emit(self, code_writer: CodeWriter) -> None:
         # Emit file comment
         if self.file_comment is not None:
-            code_writer.emit("/**\n")
-            self.file_comment.emit(code_writer)
-            code_writer.emit("\n*/")
-            code_writer.emit("\n\n")
+            self.file_comment.emit_javadoc(code_writer)
 
         # Emit package declaration
         if self.package_name:
@@ -83,7 +97,7 @@ class JavaFile:
         # Emit static imports
         static_imports = sorted(
             [
-                f"import static {type_name.qualified_name}.{member};"
+                f"import static {type_name.canonical_name}.{member};"
                 for type_name, members in self.static_imports.items()
                 for member in sorted(members)
             ]
@@ -97,8 +111,7 @@ class JavaFile:
         # Emit normal imports
         import_packages = sorted(imports.keys())
         for package in import_packages:
-            # Skip java.lang imports if requested
-            if self.skip_java_lang_imports and package == "java.lang":
+            if self.package_name == package:
                 continue
 
             for simple_name in sorted(imports[package]):
@@ -111,62 +124,81 @@ class JavaFile:
         self.type_spec.emit(code_writer)
         code_writer.emit("\n")
 
-    def __str__(self) -> str:
-        from io import StringIO
+    def get_relative_path(self) -> Path:
+        package_path = Path(*self.package_name.split("."))
+        return package_path.joinpath(self.type_spec.name + ".java")
 
-        out = StringIO()
-        self.emit_to(out)
-        return out.getvalue()
+    def to_builder(self) -> "Builder":
+        return JavaFile.Builder(
+            self.package_name,
+            self.type_spec,
+            self.file_comment,
+            self.indent,
+            self.static_imports,
+        )
+    
+    def __str__(self) -> str:
+        with StringIO() as sio:
+            self.emit_to(sio)
+            return sio.getvalue()
 
     @staticmethod
     def builder(package_name: str, type_spec: TypeSpec) -> "Builder":
         return JavaFile.Builder(package_name, type_spec)
 
-    class Builder:
+    class Builder(Code.Builder["JavaFile"]):
         """
         Builder for JavaFile instances.
         """
 
-        def __init__(self, package_name: str, type_spec: TypeSpec):
-            self.package_name = package_name
-            self.type_spec = type_spec
-            self.file_comment = None
-            self.skip_java_lang_imports = False
-            self.indent = "  "
-            self.static_imports = {}  # ClassName -> set of static members
+        def __init__(
+            self,
+            package_name: str,
+            type_spec: TypeSpec,
+            file_comment: Optional[CodeBlock] = None,
+            indent: str = "  ",
+            static_imports: dict[ClassName, set[str]] | None = None,
+        ):
+            self.__package_name = package_name
+            self.__type_spec = type_spec
+            self.__file_comment = file_comment
+            self.__indent = indent
+            self.__static_imports = static_imports or {}
 
-        def add_file_comment(self, format_string: str, *args) -> "JavaFile.Builder":
-            self.file_comment = CodeBlock.of(format_string, *args)
+        def add_generated_by(self, creator: str, extra_comment: str = "", *args) -> "JavaFile.Builder":
+            self.add_file_comment("@generated")
+            self.add_file_comment(f"Generated by {creator}", *args)
+            if extra_comment:
+                self.add_file_comment(extra_comment, *args)
             return self
 
-        def skip_java_lang_imports(self, skip: bool = True) -> "JavaFile.Builder":
-            self.skip_java_lang_imports = skip
+        def add_file_comment(self, format_string: str = EMPTY_STRING, *args) -> "JavaFile.Builder":
+            self.__file_comment = CodeBlock.add_javadoc(self.__file_comment, format_string, *args)
             return self
 
         def indent(self, indent: str) -> "JavaFile.Builder":
-            self.indent = indent
+            self.__indent = indent
             return self
 
         def add_static_import(self, constant_class: Union[ClassName, str], constant_name: str) -> "JavaFile.Builder":
             if isinstance(constant_class, str):
                 constant_class = ClassName.get_from_fqcn(constant_class)
 
-            if constant_class not in self.static_imports:
-                self.static_imports[constant_class] = set()
+            if constant_class not in self.__static_imports:
+                self.__static_imports[constant_class] = set()
 
             if constant_name == "*":
-                self.static_imports[constant_class].add(constant_name)
+                self.__static_imports[constant_class].add(constant_name)
             else:
-                self.static_imports[constant_class].add(constant_name)
+                self.__static_imports[constant_class].add(constant_name)
 
             return self
 
         def build(self) -> "JavaFile":
             return JavaFile(
-                self.package_name,
-                self.type_spec,
-                self.file_comment,
-                self.skip_java_lang_imports,
-                self.indent,
-                self.static_imports,
+                self.__package_name,
+                self.__type_spec,
+                self.__file_comment,
+                self.__indent,
+                self.__static_imports,
             )
