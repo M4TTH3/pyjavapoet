@@ -7,7 +7,7 @@ placeholders like $L (literals), $S (strings), $T (types), and $N (names).
 """
 
 import re
-from typing import Any
+from typing import Any, Optional
 
 from code_base import Code
 from util import deep_copy
@@ -157,6 +157,13 @@ class CodeBlock(Code["CodeBlock"]):
             builder.add("$L", code_block)
 
         return builder.build()
+    
+    @staticmethod
+    def add_javadoc(javadoc: Optional["CodeBlock"], format_string: str, *args) -> "CodeBlock":
+        if javadoc:
+            return CodeBlock.join_to_code([javadoc, CodeBlock.of(format_string, *args)], "\n")
+        else:
+            return CodeBlock.of(format_string, *args)
 
     class Builder(Code.Builder["CodeBlock"]):
         """

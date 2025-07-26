@@ -10,9 +10,9 @@ This module defines the TypeSpec class, which is used to represent Java types:
 """
 
 from enum import Enum, auto
-from typing import Dict, Optional, Tuple, Union
+from typing import Optional, Union
 
-from util import deep_copy
+from code_base import Code
 
 from pyjavapoet.annotation_spec import AnnotationSpec
 from pyjavapoet.code_block import CodeBlock
@@ -20,10 +20,12 @@ from pyjavapoet.code_writer import CodeWriter
 from pyjavapoet.field_spec import FieldSpec
 from pyjavapoet.method_spec import MethodSpec
 from pyjavapoet.modifier import Modifier
+from pyjavapoet.parameter_spec import ParameterSpec
 from pyjavapoet.type_name import ClassName, TypeName, TypeVariableName
+from pyjavapoet.util import deep_copy
 
 
-class TypeSpec:
+class TypeSpec(Code["TypeSpec"]):
     """
     Represents a class, interface, enum, annotation, or record declaration.
 
@@ -40,37 +42,6 @@ class TypeSpec:
         ENUM = auto()
         ANNOTATION = auto()
         RECORD = auto()
-
-    class AnonymousClassBuilder:
-        """
-        Builder for anonymous inner classes.
-        """
-
-        def __init__(self, type_name: TypeName):
-            self.type_name = type_name
-            self.type_spec_builder = TypeSpec.builder("")
-            self.constructor_args_format = ""
-            self.constructor_args = []
-
-        def add_super_class_constructor_argument(self, format_string: str, *args) -> "TypeSpec.AnonymousClassBuilder":
-            self.constructor_args_format = format_string
-            self.constructor_args.extend(args)
-            return self
-
-        def add_method(self, method_spec: MethodSpec) -> "TypeSpec.AnonymousClassBuilder":
-            self.type_spec_builder.add_method(method_spec)
-            return self
-
-        def add_field(self, field_spec: FieldSpec) -> "TypeSpec.AnonymousClassBuilder":
-            self.type_spec_builder.add_field(field_spec)
-            return self
-
-        def build(self) -> "TypeSpec":
-            type_spec = self.type_spec_builder.build()
-            type_spec.anonymous_class_format = self.constructor_args_format
-            type_spec.anonymous_class_args = self.constructor_args
-            type_spec.superclass = self.type_name
-            return type_spec
 
     # Fields for TypeSpec
     name: str
@@ -106,8 +77,8 @@ class TypeSpec:
         fields: list[FieldSpec],
         methods: list[MethodSpec],
         types: list["TypeSpec"],
-        enum_constants: Dict[str, "TypeSpec"],
-        record_components: list[Tuple[TypeName, str]],
+        enum_constants: dict[str, "TypeSpec"],
+        record_components: list[tuple[TypeName, str]],
     ):
         self.name = name
         self.kind = kind
@@ -129,38 +100,69 @@ class TypeSpec:
         self.anonymous_class_args = []
 
     def emit(self, code_writer: "CodeWriter") -> None:
-        # Emit Javadoc
-        if self.javadoc is not None:
-            code_writer.emit("/**\n")
-            code_writer.emit(" * ")
-            self.javadoc.emit(code_writer)
-            code_writer.emit("\n */\n")
+        # Check if this is an anonymous class
+        is_anonymous = not self.name and self.superclass
 
-        # Emit annotations
-        for annotation in self.annotations:
-            annotation.emit(code_writer)
-            code_writer.emit("\n")
+        if is_anonymous:
+            # Emit anonymous class: new TypeName() { ... }
+            code_writer.emit("new ")
+            if self.superclass:
+                self.superclass.emit(code_writer)
+            code_writer.emit("(")
+            if self.anonymous_class_format:
+                code_block = CodeBlock.of(self.anonymous_class_format, *self.anonymous_class_args)
+                code_block.emit(code_writer)
+            code_writer.emit(")")
+            # Skip the rest of the emission for anonymous classes
+            code_writer.emit(" {\n")
+            code_writer.indent()
 
-        # Emit modifiers
-        for modifier in sorted(self.modifiers, key=lambda m: m.value):
-            code_writer.emit(modifier.value)
+            # Emit fields
+            for field in self.fields:
+                field.emit(code_writer)
+
+            if self.fields and self.methods:
+                code_writer.emit("\n")
+
+            # Emit methods
+            for method in self.methods:
+                method.emit(code_writer)
+                code_writer.emit("\n")
+
+            code_writer.unindent()
+            code_writer.emit("}")
+            return
+        else:
+            # Emit regular class/interface/enum
+            # Emit Javadoc
+            if self.javadoc:
+                self.javadoc.emit_javadoc(code_writer)
+
+            # Emit annotations
+            for annotation in self.annotations:
+                annotation.emit(code_writer)
+                code_writer.emit("\n")
+
+            # Emit modifiers
+            for modifier in Modifier.ordered_modifiers(self.modifiers):
+                code_writer.emit(modifier.value)
+                code_writer.emit(" ")
+
+            # Emit kind
+            if self.kind == TypeSpec.Kind.CLASS:
+                code_writer.emit("class")
+            elif self.kind == TypeSpec.Kind.INTERFACE:
+                code_writer.emit("interface")
+            elif self.kind == TypeSpec.Kind.ENUM:
+                code_writer.emit("enum")
+            elif self.kind == TypeSpec.Kind.ANNOTATION:
+                code_writer.emit("@interface")
+            elif self.kind == TypeSpec.Kind.RECORD:
+                code_writer.emit("record")
+
+            # Emit name and type variables
             code_writer.emit(" ")
-
-        # Emit kind
-        if self.kind == TypeSpec.Kind.CLASS:
-            code_writer.emit("class")
-        elif self.kind == TypeSpec.Kind.INTERFACE:
-            code_writer.emit("interface")
-        elif self.kind == TypeSpec.Kind.ENUM:
-            code_writer.emit("enum")
-        elif self.kind == TypeSpec.Kind.ANNOTATION:
-            code_writer.emit("@interface")
-        elif self.kind == TypeSpec.Kind.RECORD:
-            code_writer.emit("record")
-
-        # Emit name and type variables
-        code_writer.emit(" ")
-        code_writer.emit(self.name)
+            code_writer.emit(self.name)
 
         if self.type_variables:
             code_writer.emit("<")
@@ -221,7 +223,6 @@ class TypeSpec:
                     code_writer.emit("\n")
                     annotation.emit(code_writer)
 
-                code_writer.emit("\n")
                 code_writer.emit(name)
 
                 # If this is an anonymous class
@@ -263,9 +264,10 @@ class TypeSpec:
             code_writer.emit("\n")
 
         # Emit methods
-        for method in self.methods:
+        for i, method in enumerate(self.methods):
             method.emit(code_writer)
-            code_writer.emit("\n")
+            if i < len(self.methods) - 1:
+                code_writer.emit("\n")
 
         if self.methods and self.types:
             code_writer.emit("\n")
@@ -278,12 +280,23 @@ class TypeSpec:
         code_writer.unindent()
         code_writer.emit("}")
 
-    def __str__(self) -> str:
-        from pyjavapoet.code_writer import CodeWriter
-
-        writer = CodeWriter()
-        self.emit(writer)
-        return str(writer)
+    def to_builder(self) -> "Builder":
+        return TypeSpec.Builder(
+            self.name,
+            self.kind,
+            deep_copy(self.modifiers),
+            deep_copy(self.type_variables),
+            deep_copy(self.superclass),
+            deep_copy(self.superinterfaces),
+            deep_copy(self.permitted_subclasses),
+            deep_copy(self.javadoc),
+            deep_copy(self.annotations),
+            deep_copy(self.fields),
+            deep_copy(self.methods),
+            deep_copy(self.types),
+            deep_copy(self.enum_constants),
+            deep_copy(self.record_components),
+        )
 
     @staticmethod
     def builder(name: str) -> "Builder":
@@ -310,7 +323,7 @@ class TypeSpec:
         return TypeSpec.Builder(name, TypeSpec.Kind.RECORD)
 
     @staticmethod
-    def anonymous_class_builder(format_string: str, *args) -> "AnonymousClassBuilder":
+    def anonymous_class_builder(format_string: str = "", *args) -> "AnonymousClassBuilder":
         from pyjavapoet.type_name import TypeName
 
         builder = TypeSpec.AnonymousClassBuilder(TypeName.OBJECT)
@@ -318,7 +331,7 @@ class TypeSpec:
             builder.add_super_class_constructor_argument(format_string, *args)
         return builder
 
-    class Builder:
+    class Builder(Code.Builder["TypeSpec"]):
         """
         Builder for TypeSpec instances.
         """
@@ -336,8 +349,8 @@ class TypeSpec:
         __fields: list[FieldSpec]
         __methods: list[MethodSpec]
         __types: list["TypeSpec"]
-        __enum_constants: Dict[str, "TypeSpec"]
-        __record_components: list[Tuple[TypeName, str]]
+        __enum_constants: dict[str, "TypeSpec"]
+        __record_components: list[tuple[TypeName, str]]
 
         def __init__(
             self,
@@ -353,8 +366,8 @@ class TypeSpec:
             fields: Optional[list[FieldSpec]] = None,
             methods: Optional[list[MethodSpec]] = None,
             types: Optional[list["TypeSpec"]] = None,
-            enum_constants: Optional[Dict[str, "TypeSpec"]] = None,
-            record_components: Optional[list[Tuple[TypeName, str]]] = None,
+            enum_constants: Optional[dict[str, "TypeSpec"]] = None,
+            record_components: Optional[list[tuple[TypeName, str]]] = None,
         ):
             self.__name = name
             self.__kind = kind
@@ -406,7 +419,7 @@ class TypeSpec:
             return self
 
         def add_javadoc(self, format_string: str, *args) -> "TypeSpec.Builder":
-            self.__javadoc = CodeBlock.of(format_string, *args)
+            self.__javadoc = CodeBlock.add_javadoc(self.__javadoc, format_string, *args)
             return self
 
         def add_annotation(self, annotation_spec: AnnotationSpec) -> "TypeSpec.Builder":
@@ -424,12 +437,7 @@ class TypeSpec:
                 or method_spec.kind == MethodSpec.Kind.COMPACT_CONSTRUCTOR
             ):
                 if not method_spec.name:
-                    # We need to create a new MethodSpec with the correct name
-                    from copy import copy
-
-                    new_method = copy(method_spec)
-                    new_method.name = self.__name
-                    method_spec = new_method
+                    method_spec = method_spec.to_builder().set_name(self.__name).build()
 
             self.__methods.append(method_spec)
             return self
@@ -455,14 +463,26 @@ class TypeSpec:
             self.__enum_constants[name] = type_spec
             return self
 
-        def add_record_component(self, type_name: Union["TypeName", str, type], name: str) -> "TypeSpec.Builder":
+        def add_record_component(
+            self, type_or_param: Union["ParameterSpec", "TypeName", str, type], name: Optional[str] = None
+        ) -> "TypeSpec.Builder":
             if self.__kind != TypeSpec.Kind.RECORD:
                 raise ValueError("Record components can only be added to records")
 
-            if not isinstance(type_name, TypeName):
-                type_name = TypeName.get(type_name)
+            if isinstance(type_or_param, ParameterSpec):
+                # Extract type and name from ParameterSpec
+                component_type = type_or_param.type_name
+                component_name = type_or_param.name
+            else:
+                # Use provided type and name
+                if name is None:
+                    raise ValueError("name parameter is required when type_or_param is not a ParameterSpec")
+                component_type = (
+                    TypeName.get(type_or_param) if not isinstance(type_or_param, TypeName) else type_or_param
+                )
+                component_name = name
 
-            self.__record_components.append((type_name, name))
+            self.__record_components.append((component_type, component_name))
             return self
 
         def build(self) -> "TypeSpec":
@@ -487,3 +507,41 @@ class TypeSpec:
                 deep_copy(self.__enum_constants),
                 deep_copy(self.__record_components),
             )
+
+    class AnonymousClassBuilder(Code.Builder["TypeSpec"]):
+        """
+        Builder for anonymous inner classes.
+        """
+
+        def __init__(self, type_name: TypeName):
+            self.type_name = type_name
+            self.type_spec_builder = TypeSpec.builder("")
+            self.constructor_args_format = ""
+            self.constructor_args = []
+
+        def add_super_class_constructor_argument(self, format_string: str, *args) -> "TypeSpec.AnonymousClassBuilder":
+            self.constructor_args_format = format_string
+            self.constructor_args.extend(args)
+            return self
+
+        def add_superinterface(self, superinterface: Union["TypeName", str, type]) -> "TypeSpec.AnonymousClassBuilder":
+            """Add a superinterface that this anonymous class implements."""
+            if not isinstance(superinterface, TypeName):
+                superinterface = TypeName.get(superinterface)
+            self.type_name = superinterface
+            return self
+
+        def add_method(self, method_spec: MethodSpec) -> "TypeSpec.AnonymousClassBuilder":
+            self.type_spec_builder.add_method(method_spec)
+            return self
+
+        def add_field(self, field_spec: FieldSpec) -> "TypeSpec.AnonymousClassBuilder":
+            self.type_spec_builder.add_field(field_spec)
+            return self
+
+        def build(self) -> "TypeSpec":
+            type_spec = self.type_spec_builder.build()
+            type_spec.anonymous_class_format = self.constructor_args_format
+            type_spec.anonymous_class_args = self.constructor_args
+            type_spec.superclass = self.type_name
+            return type_spec

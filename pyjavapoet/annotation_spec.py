@@ -21,6 +21,7 @@ class AnnotationSpec(Code["AnnotationSpec"]):
 
     AnnotationSpec instances are immutable. Use the builder to create new instances.
     """
+
     type_name: "TypeName"
     members: dict[str, list[CodeBlock]]
 
@@ -65,12 +66,8 @@ class AnnotationSpec(Code["AnnotationSpec"]):
 
         code_writer.emit(")")
 
-
     def to_builder(self) -> "Builder":
-        return AnnotationSpec.Builder(
-            deep_copy(self.type_name),
-            deep_copy(self.members)
-        )
+        return AnnotationSpec.Builder(deep_copy(self.type_name), deep_copy(self.members))
 
     @staticmethod
     def get(type_name: Union["TypeName", str, type]) -> "AnnotationSpec":
@@ -84,6 +81,7 @@ class AnnotationSpec(Code["AnnotationSpec"]):
         """
         Builder for AnnotationSpec instances.
         """
+
         __type_name: "TypeName"
         __members: dict[str, list[CodeBlock]]
 

@@ -54,7 +54,6 @@ class ClassTypesTest(unittest.TestCase):
             public static final String ONLY_THING_THAT_IS_CONSTANT = "change";
 
             public abstract void beep();
-
           }
         """)
         print(out.getvalue())
@@ -80,13 +79,12 @@ class ClassTypesTest(unittest.TestCase):
         java_file.write_to(out)
 
         # Check the output
-        expected = """package com.example.game;
+        expected = """\
+package com.example.game;
 
 public enum Roshambo {
   ROCK,
-
   SCISSORS,
-
   PAPER
 }
 """
@@ -124,9 +122,8 @@ public enum Roshambo {
         java_file.write_to(out)
 
         # Check the output
-        expected = """package com.example.util;
-
-import java.lang.Comparable;
+        expected = """\
+package com.example.util;
 
 public class IdentityMixer<T extends Comparable> {
   public T identity(T value) {

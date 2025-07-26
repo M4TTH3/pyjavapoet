@@ -44,11 +44,9 @@ class FieldSpec(Code["FieldSpec"]):
 
     def emit(self, code_writer: "CodeWriter") -> None:
         # Emit Javadoc
-        if self.javadoc is not None:
-            code_writer.emit("/**\n")
-            code_writer.emit(" * ")
-            self.javadoc.emit(code_writer)
-            code_writer.emit("*/\n")
+        if self.javadoc:
+            self.javadoc.emit_javadoc(code_writer)
+            code_writer.emit("\n")
 
         # Emit annotations
         for annotation in self.annotations:
@@ -71,7 +69,7 @@ class FieldSpec(Code["FieldSpec"]):
             self.initializer.emit(code_writer)
 
         code_writer.emit(";\n")
-    
+
     def to_builder(self) -> "Builder":
         return FieldSpec.Builder(
             deep_copy(self.type_name),
@@ -85,12 +83,59 @@ class FieldSpec(Code["FieldSpec"]):
     @staticmethod
     def is_valid_field_name(name: str) -> bool:
         java_keywords = {
-            "abstract", "assert", "boolean", "break", "byte", "case", "catch", "char", "class", "const",
-            "continue", "default", "do", "double", "else", "enum", "extends", "final", "finally", "float",
-            "for", "goto", "if", "implements", "import", "instanceof", "int", "interface", "long", "native",
-            "new", "package", "private", "protected", "public", "return", "short", "static", "strictfp",
-            "super", "switch", "synchronized", "this", "throw", "throws", "transient", "try", "void",
-            "volatile", "while", "true", "false", "null"
+            "abstract",
+            "assert",
+            "boolean",
+            "break",
+            "byte",
+            "case",
+            "catch",
+            "char",
+            "class",
+            "const",
+            "continue",
+            "default",
+            "do",
+            "double",
+            "else",
+            "enum",
+            "extends",
+            "final",
+            "finally",
+            "float",
+            "for",
+            "goto",
+            "if",
+            "implements",
+            "import",
+            "instanceof",
+            "int",
+            "interface",
+            "long",
+            "native",
+            "new",
+            "package",
+            "private",
+            "protected",
+            "public",
+            "return",
+            "short",
+            "static",
+            "strictfp",
+            "super",
+            "switch",
+            "synchronized",
+            "this",
+            "throw",
+            "throws",
+            "transient",
+            "try",
+            "void",
+            "volatile",
+            "while",
+            "true",
+            "false",
+            "null",
         }
         return name.isidentifier() and name not in java_keywords
 
@@ -115,13 +160,14 @@ class FieldSpec(Code["FieldSpec"]):
         __javadoc: Optional["CodeBlock"]
         __initializer: Optional["CodeBlock"]
 
-        def __init__(self, 
-            type_name: "TypeName", 
-            name: str, 
-            modifiers: set[Modifier] | None = None, 
-            annotations: list["AnnotationSpec"] | None = None, 
-            javadoc: Optional["CodeBlock"] = None, 
-            initializer: Optional["CodeBlock"] = None
+        def __init__(
+            self,
+            type_name: "TypeName",
+            name: str,
+            modifiers: set[Modifier] | None = None,
+            annotations: list["AnnotationSpec"] | None = None,
+            javadoc: Optional["CodeBlock"] = None,
+            initializer: Optional["CodeBlock"] = None,
         ):
             self.__type_name = type_name
             self.__name = name
@@ -140,8 +186,8 @@ class FieldSpec(Code["FieldSpec"]):
             self.__annotations.append(annotation_spec)
             return self
 
-        def set_javadoc(self, format_string: str, *args) -> "FieldSpec.Builder":
-            self.__javadoc = CodeBlock.of(format_string, *args)
+        def add_javadoc(self, format_string: str, *args) -> "FieldSpec.Builder":
+            self.__javadoc = CodeBlock.add_javadoc(self.__javadoc, format_string, *args)
             return self
 
         def initializer(self, format_string: str | CodeBlock, *args) -> "FieldSpec.Builder":

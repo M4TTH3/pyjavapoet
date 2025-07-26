@@ -51,7 +51,7 @@ class FieldSpecTest(unittest.TestCase):
         field = FieldSpec.builder(ClassName.get("java.lang", "String"), "name").add_annotation(annotation).build()
 
         result = str(field)
-        self.assertEqual('@Nullable\nString name;\n', result)
+        self.assertEqual("@Nullable\nString name;\n", result)
 
     def test_static_field(self):
         """Test static field creation."""
@@ -71,13 +71,20 @@ class FieldSpecTest(unittest.TestCase):
         """Test field with javadoc."""
         field = (
             FieldSpec.builder(ClassName.get("java.lang", "String"), "name")
-            .set_javadoc("@deprecated Use something else\n")
+            .add_javadoc("@deprecated Use something else")
+            .add_javadoc("Use something else")
             .build()
         )
 
         result = str(field)
-        print(result)
-        self.assertEqual('/**\n * @deprecated Use something else\n*/\nString name;\n', result)
+        expected = """\
+/**
+ * @deprecated Use something else
+ * Use something else
+ */
+String name;
+"""
+        self.assertEqual(expected, result)
 
     def test_primitive_field(self):
         """Test primitive field creation."""
@@ -150,7 +157,7 @@ class FieldSpecTest(unittest.TestCase):
         )
 
         result = str(field)
-        self.assertEqual('@Nullable\n@Deprecated\nString name;\n', result)
+        self.assertEqual("@Nullable\n@Deprecated\nString name;\n", result)
 
     def test_invalid_field_name(self):
         """Test that invalid field names are rejected."""

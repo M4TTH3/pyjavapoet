@@ -188,6 +188,10 @@ class ClassName(TypeName):
     def with_type_arguments(self, *type_arguments: Union["TypeName", str, type]) -> "ParameterizedTypeName":
         return ParameterizedTypeName(self, [TypeName.get(arg) for arg in type_arguments])
     
+    def array(self) -> "ArrayTypeName":
+        """Return an array type with this class as the component type."""
+        return ArrayTypeName(self)
+    
     def to_type_param(self) -> "TypeName":
         if self.is_primitive():
             return ClassName(self.package_name, [TypeName.PRIMITIVE_TYPES[self.simple_name]])

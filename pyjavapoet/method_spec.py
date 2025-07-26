@@ -9,7 +9,6 @@ from enum import Enum, auto
 from typing import Optional, Union
 
 from code_base import Code
-from util import deep_copy
 
 from pyjavapoet.annotation_spec import AnnotationSpec
 from pyjavapoet.code_block import CodeBlock
@@ -17,6 +16,7 @@ from pyjavapoet.code_writer import EMPTY_STRING, CodeWriter
 from pyjavapoet.modifier import Modifier
 from pyjavapoet.parameter_spec import ParameterSpec
 from pyjavapoet.type_name import TypeName, TypeVariableName
+from pyjavapoet.util import deep_copy
 
 
 class MethodSpec(Code["MethodSpec"]):
@@ -92,8 +92,10 @@ class MethodSpec(Code["MethodSpec"]):
 
         # Emit return type for methods
         if self.kind == MethodSpec.Kind.METHOD:
-            if self.return_type is None:
+            if not self.return_type:
                 code_writer.emit("void")
+            elif isinstance(self.return_type, TypeVariableName):
+                self.return_type.emit_name_only(code_writer)
             else:
                 self.return_type.emit(code_writer)
             code_writer.emit(" ")
@@ -148,16 +150,6 @@ class MethodSpec(Code["MethodSpec"]):
             self.code.to_builder() if self.code else CodeBlock.builder(),
             deep_copy(self.default_value),
         )
-    
-    def copy(self) -> "MethodSpec":
-        ...
-
-    def __str__(self) -> str:
-        from pyjavapoet.code_writer import CodeWriter
-
-        writer = CodeWriter()
-        self.emit(writer)
-        return str(writer)
 
     @staticmethod
     def method_builder(name: str) -> "Builder":
@@ -222,7 +214,10 @@ class MethodSpec(Code["MethodSpec"]):
             return self
 
         def add_parameter(
-            self, parameter_spec: Union["ParameterSpec", "TypeName", str, type], name: str, final: bool = False
+            self,
+            parameter_spec: Union["ParameterSpec", "TypeName", str, type],
+            name: str,
+            final: bool = False,
         ) -> "MethodSpec.Builder":
             if isinstance(parameter_spec, ParameterSpec):
                 parameter = parameter_spec.to_builder()
@@ -230,7 +225,7 @@ class MethodSpec(Code["MethodSpec"]):
                 parameter = ParameterSpec.builder(parameter_spec, name)
 
             if final:
-                parameter.add_final()
+                    parameter.add_final()
             self.__parameters.append(parameter.build())
             return self
 
@@ -260,10 +255,7 @@ class MethodSpec(Code["MethodSpec"]):
             return self
 
         def add_javadoc(self, format_string: str = EMPTY_STRING, *args) -> "MethodSpec.Builder":
-            if self.__javadoc:
-                self.__javadoc = CodeBlock.join_to_code([self.__javadoc, CodeBlock.of(format_string, *args)], "\n")
-            else:
-                self.__javadoc = CodeBlock.of(format_string, *args)
+            self.__javadoc = CodeBlock.add_javadoc(self.__javadoc, format_string, *args)
             return self
 
         def add_annotation(self, annotation_spec: "AnnotationSpec") -> "MethodSpec.Builder":

@@ -3,7 +3,10 @@ Tests for CodeBlock functionality.
 Equivalent to CodeBlockTest.java
 """
 
+from io import StringIO
 import unittest
+
+from code_writer import CodeWriter
 
 from pyjavapoet.code_block import CodeBlock
 from pyjavapoet.type_name import ClassName
@@ -301,6 +304,13 @@ class CodeBlockTest(unittest.TestCase):
 
         self.assertEqual(block.javadoc(), "/**\n * Hello, World!\n */")
 
+    def test_add_javadoc(self):
+        """Test adding JavaDoc to a code block."""
+        block = CodeBlock.of("$L", "Hello, World!")
+        block = CodeBlock.add_javadoc(block, "Hello, World!")
+        writer = CodeWriter()
+        block.emit_javadoc(writer)
+        self.assertEqual(str(writer), "/**\n * Hello, World!\n * Hello, World!\n */")
 
 if __name__ == "__main__":
     unittest.main()

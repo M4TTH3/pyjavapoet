@@ -376,6 +376,17 @@ public static <T> T identity(T input) {
 
         result = str(method)
         self.assertIn("@Nullable String name", result)
+    
+    def test_method_with_type_variable_return_type(self):
+        """Test method with type variable return type."""
+        method = (
+            MethodSpec.method_builder("process")
+            .add_modifiers(Modifier.PUBLIC)
+            .returns(TypeVariableName.get("T"))
+            .build()
+        )
+        result = str(method)
+        self.assertIn("public T process()", result)
 
 
 if __name__ == "__main__":
