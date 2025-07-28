@@ -25,28 +25,35 @@ class CodeWriter:
     """
 
     __indent: str
-    __max_line_length: int  # TODO
+    # TODO: __max_line_length: int
     __out: list[str]
     __indent_level: int
     __line_start: bool
-    __type_spec_class_name: ClassName | None
 
     # Track ClassNames that have been used. If it maps to a None that means
     # it's a part of the current package.
     __imports: dict[Annotated[str, "top_level_simple_name"], ClassName]
+
+    # Track all the classes available in the current class scope
+    # They will take priority over any named reference
+    # The value is the number of times it has been excluded
+    __excluded_scoped_classes: dict[str, int]
+
+    __package_name: str
 
     def __init__(self, indent: str = "  ", type_spec_class_name: ClassName | None = None):
         self.__indent = indent
         self.__out = []  # Output buffer
         self.__indent_level = 0
         self.__line_start = True  # Are we at the start of a line?
-        self.__type_spec_class_name = type_spec_class_name
+        self.__package_name = ""
+        self.__imports = {}
+        self.__excluded_scoped_classes = {}
 
         # Imports tracking
         if type_spec_class_name:
-            self.__imports = {type_spec_class_name.top_simple_name: type_spec_class_name}
-        else:
-            self.__imports = {}
+            self.__package_name = type_spec_class_name.package_name
+            self.__excluded_scoped_classes[type_spec_class_name.top_simple_name] = 1
 
     def indent(self, count: int = 1) -> None:
         self.__indent_level += count
@@ -90,15 +97,21 @@ class CodeWriter:
     def emit_type(self, type_name: "TypeName") -> None:
         if isinstance(type_name, ClassName):
             # Record that we need to import this type
-            if type_name.package_name:
-                class_name = self.__imports.get(type_name.top_simple_name)
-                if not class_name or type_name == class_name:
-                    self.emit(type_name.nested_name)
-                    self.__imports[type_name.top_simple_name] = type_name
-                else:
-                    self.emit(type_name.canonical_name)
-            else:
+            # Note: in_package also includes primitive types :)
+            package_name = type_name.package_name or self.__package_name
+            in_package_or_primitive = package_name == self.__package_name or type_name.is_primitive()
+            is_excluded = self.__excluded_scoped_classes.get(type_name.top_simple_name, 0) > 0
+            class_name = self.__imports.get(type_name.top_simple_name)
+            if not in_package_or_primitive and not is_excluded and (not class_name or type_name == class_name):
                 self.emit(type_name.nested_name)
+                self.__imports[type_name.top_simple_name] = type_name
+            elif in_package_or_primitive and not class_name:
+                # This means we haven't imported this top_simple_name yet
+                # So we can use the nested_name and exclude it from the imports
+                self.emit(type_name.nested_name)
+                self.exclude_scoped_class(type_name.top_simple_name)
+            else:
+                self.emit(type_name.canonical_name)
         else:
             type_name.emit(self)
 
@@ -127,15 +140,24 @@ class CodeWriter:
         self.emit("}\n")
         return self
 
+    def exclude_scoped_class(self, class_name: str):
+        """
+        Define any inner classes here because any usage on the same level
+        inherently references them
+        """
+        self.__excluded_scoped_classes[class_name] = self.__excluded_scoped_classes.get(class_name, 0) + 1
+
+    def unexclude_scoped_class(self, class_name: str):
+        self.__excluded_scoped_classes[class_name] = self.__excluded_scoped_classes.get(class_name, 0) - 1
+        if self.__excluded_scoped_classes[class_name] < 0:
+            raise ValueError(f"Class {class_name} has been unexcluded more times than it was excluded")
+
     def get_imports(self) -> dict[str, set[str]]:
         result: dict[str, set[str]] = {}
 
         for type_name in self.__imports.values():
             package = type_name.package_name
-            if (
-                type_name.ignore_package_name
-                or (self.__type_spec_class_name and package == self.__type_spec_class_name.package_name)
-            ):
+            if type_name.ignore_import:
                 continue
 
             if package not in result:

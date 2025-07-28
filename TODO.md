@@ -9,3 +9,4 @@
 7. Multiple imports with same ClassName should use package name
 8. Handle primitive types better in ClassName i.e. validation
 9. Improve tests with exact output strings and also slim down unneeded tests
+10. Pass in TypeSpec for Types as well (for nested classes) ? It might work and we can include a self key too

@@ -74,7 +74,6 @@ class AnnotationSpecTest(unittest.TestCase):
 
     def test_requires_valid_member_name(self):
         """Test that invalid member names are rejected."""
-        self.skipTest("Not implemented")
         builder = AnnotationSpec.builder(ClassName.get("com.example", "TestAnnotation"))
         with self.assertRaises(ValueError):
             builder.add_member("@", "$L", "")

@@ -70,7 +70,7 @@ class TypeName(ABC):
             "Object": JAVA_LANG_PACKAGE,
             "String": JAVA_LANG_PACKAGE,
         }
-        | {t: None for t in PRIMITIVE_TYPES.values()}
+        | {t: '' for t in PRIMITIVE_TYPES.values()}
         | {t: JAVA_LANG_PACKAGE for t in BOXED_PRIMITIVE_TYPES}
     )
 
@@ -118,6 +118,17 @@ class TypeName(ABC):
             and self.package_name == JAVA_LANG_PACKAGE
             and ClassName.strip_simple_name(self.simple_name) in TypeName.BOXED_PRIMITIVE_TYPES
         )
+    
+    def is_any_primitive(self) -> bool:
+        if not isinstance(self, ClassName):
+            return False
+        
+        stripped_simple_name = ClassName.strip_simple_name(self.simple_name)
+        package_name = TypeName.ALL_PRIMITIVE_TYPES.get(stripped_simple_name)
+        if package_name:
+            return self.package_name == package_name
+
+        return False
 
     @staticmethod
     def get(type_mirror_or_name: Union[str, type, "TypeName"]) -> "TypeName":
@@ -159,7 +170,7 @@ class TypeName(ABC):
 class ClassName(TypeName):
     package_name: str
     simple_names: list[str]
-    ignore_package_name: bool
+    ignore_import: bool
 
     def __init__(self, package_name: str, simple_names: list[str], annotations: list["AnnotationSpec"] | None = None):
         super().__init__(annotations)
@@ -168,7 +179,7 @@ class ClassName(TypeName):
 
         self.package_name = package_name
         self.simple_names = simple_names
-        self.ignore_package_name = package_name in TypeName.ALL_PRIMITIVE_TYPES.values()
+        self.ignore_import = package_name == JAVA_LANG_PACKAGE or self.is_any_primitive()
 
     def emit(self, code_writer: "CodeWriter") -> None:
         # Emit annotations if any
@@ -199,6 +210,12 @@ class ClassName(TypeName):
         if self.is_primitive():
             return ClassName(self.package_name, [TypeName.PRIMITIVE_TYPES[self.simple_name]])
         return self
+    
+    def __ignore_import(self) -> bool:
+        """
+        Ignore IFF its a primitive type or a boxed primitive type
+        """
+        return self.nested_name in TypeName.ALL_PRIMITIVE_TYPES
 
     @property
     def reflection_name(self) -> str:

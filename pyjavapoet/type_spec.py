@@ -132,37 +132,39 @@ class TypeSpec(Code["TypeSpec"]):
             code_writer.unindent()
             code_writer.emit("}")
             return
-        else:
-            # Emit regular class/interface/enum
-            # Emit Javadoc
-            if self.javadoc:
-                self.javadoc.emit_javadoc(code_writer)
 
-            # Emit annotations
-            for annotation in self.annotations:
-                annotation.emit(code_writer)
-                code_writer.emit("\n")
+        self.__exclude_direct_inner_classes(code_writer)
 
-            # Emit modifiers
-            for modifier in Modifier.ordered_modifiers(self.modifiers):
-                code_writer.emit(modifier.value)
-                code_writer.emit(" ")
+        # Emit regular class/interface/enum
+        # Emit Javadoc
+        if self.javadoc:
+            self.javadoc.emit_javadoc(code_writer)
 
-            # Emit kind
-            if self.kind == TypeSpec.Kind.CLASS:
-                code_writer.emit("class")
-            elif self.kind == TypeSpec.Kind.INTERFACE:
-                code_writer.emit("interface")
-            elif self.kind == TypeSpec.Kind.ENUM:
-                code_writer.emit("enum")
-            elif self.kind == TypeSpec.Kind.ANNOTATION:
-                code_writer.emit("@interface")
-            elif self.kind == TypeSpec.Kind.RECORD:
-                code_writer.emit("record")
+        # Emit annotations
+        for annotation in self.annotations:
+            annotation.emit(code_writer)
+            code_writer.emit("\n")
 
-            # Emit name and type variables
+        # Emit modifiers
+        for modifier in Modifier.ordered_modifiers(self.modifiers):
+            code_writer.emit(modifier.value)
             code_writer.emit(" ")
-            code_writer.emit(self.name)
+
+        # Emit kind
+        if self.kind == TypeSpec.Kind.CLASS:
+            code_writer.emit("class")
+        elif self.kind == TypeSpec.Kind.INTERFACE:
+            code_writer.emit("interface")
+        elif self.kind == TypeSpec.Kind.ENUM:
+            code_writer.emit("enum")
+        elif self.kind == TypeSpec.Kind.ANNOTATION:
+            code_writer.emit("@interface")
+        elif self.kind == TypeSpec.Kind.RECORD:
+            code_writer.emit("record")
+
+        # Emit name and type variables
+        code_writer.emit(" ")
+        code_writer.emit(self.name)
 
         if self.type_variables:
             code_writer.emit("<")
@@ -273,12 +275,15 @@ class TypeSpec(Code["TypeSpec"]):
             code_writer.emit("\n")
 
         # Emit nested types
-        for type_spec in self.types:
+        for i, type_spec in enumerate(self.types):
             type_spec.emit(code_writer)
             code_writer.emit("\n")
+            if (i < len(self.types) - 1):
+                code_writer.emit("\n")
 
         code_writer.unindent()
         code_writer.emit("}")
+        self.__unexclude_direct_inner_classes(code_writer)
 
     def to_builder(self) -> "Builder":
         return TypeSpec.Builder(
@@ -297,6 +302,14 @@ class TypeSpec(Code["TypeSpec"]):
             deep_copy(self.enum_constants),
             deep_copy(self.record_components),
         )
+    
+    def __exclude_direct_inner_classes(self, code_writer: "CodeWriter") -> None:
+        for type_spec in self.types:
+            code_writer.exclude_scoped_class(type_spec.name)
+
+    def __unexclude_direct_inner_classes(self, code_writer: "CodeWriter") -> None:
+        for type_spec in self.types:
+            code_writer.unexclude_scoped_class(type_spec.name)
 
     @staticmethod
     def builder(name: str) -> "Builder":

@@ -118,9 +118,6 @@ class JavaFile(Code["JavaFile"]):
         # Emit normal imports
         import_packages = sorted(imports.keys())
         for package in import_packages:
-            if self.package_name == package:
-                continue
-
             for simple_name in sorted(imports[package]):
                 code_writer.emit(f"import {package}.{simple_name};\n")
 

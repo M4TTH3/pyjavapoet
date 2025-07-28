@@ -46,7 +46,8 @@ class ControlFlowTest(unittest.TestCase):
         java_file.write_to(out)
 
         # Check the output
-        expected = """package com.example.time;
+        expected = """\
+package com.example.time;
 
 public class TimeChecker {
   public void checkTime() {
@@ -92,7 +93,8 @@ public class TimeChecker {
         java_file.write_to(out)
 
         # Check the output
-        expected = """package com.example.error;
+        expected = """\
+package com.example.error;
 
 public class ErrorHandler {
   public void unsafeOperation() {

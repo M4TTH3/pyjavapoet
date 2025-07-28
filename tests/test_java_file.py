@@ -326,25 +326,130 @@ class JavaFileTest(unittest.TestCase):
         self.assertIn("class Test", result)
 
     def test_package_class_conflicts_with_nested_class(self):
-        """Test package class conflicts with nested class."""
-        self.skipTest("TODO: Add this feature in")
-        nested = TypeSpec.class_builder("System").build()
-        main_class = (
-            TypeSpec.class_builder("Test")
-            .add_type(nested)
+        self.maxDiff = None
+        system_lang = ClassName.get("java.util", "System")
+        system_class_name = ClassName.get("", "Top", "System")
+        nested_system_class_name = ClassName.get("", "Top", "Inner", "System")
+        nested_inner_class = (
+            TypeSpec.builder("Inner")
+            .add_modifiers(Modifier.PUBLIC)
+            .add_type(TypeSpec.builder("System")
+                .add_modifiers(Modifier.PUBLIC).build()
+            )
             .add_method(
-                MethodSpec.method_builder("test")
-                .add_statement("$T.out.println($S)", ClassName.get("java.lang", "System"), "test")
+                MethodSpec.constructor_builder()
+                .add_modifiers(Modifier.PUBLIC)
+                .add_statement("$T obj = null", system_lang)
+                .add_statement("$T obj2 = null", system_class_name)
+                .add_statement("$T obj3 = null", nested_system_class_name)
+                .build()
+            )
+            .build()
+        )
+        system_class = TypeSpec.builder("System").add_modifiers(Modifier.PUBLIC).build()
+        top_class = (
+            TypeSpec.builder("Top")
+            .add_modifiers(Modifier.PUBLIC)
+            .add_type(system_class)
+            .add_type(nested_inner_class)
+            .add_method(
+                MethodSpec.constructor_builder()
+                .add_modifiers(Modifier.PUBLIC)
+                .add_statement("$T obj = null", system_lang)
+                .add_statement("$T obj2 = null", system_class_name)
+                .add_statement("$T obj3 = null", nested_system_class_name)
                 .build()
             )
             .build()
         )
 
-        java_file = JavaFile.builder("com.example", main_class).build()
-
+        java_file = JavaFile.builder("com.example", top_class).indent("    ").build()
         result = str(java_file)
-        # java.lang.System should be fully qualified due to nested class conflict
-        self.assertIn("java.lang.System.out.println", result)
+        print(result)
+        self.assertEqual(result, """\
+package com.example;
+
+public class Top {
+    public Top() {
+        java.util.System obj = null;
+        Top.System obj2 = null;
+        Top.Inner.System obj3 = null;
+    }
+
+    public class System {
+    }
+
+    public class Inner {
+        public Inner() {
+            java.util.System obj = null;
+            Top.System obj2 = null;
+            Top.Inner.System obj3 = null;
+        }
+
+        public class System {
+        }
+    }
+}
+""")
+        
+    def test_inner_inner_scope_conflicts_should_use_canonical_in_inner_scope(self):
+        self.maxDiff = None
+        system_lang = ClassName.get("java.util", "System")
+        nested_system_class_name = ClassName.get("", "Top", "Inner", "System")
+        nested_inner_class = (
+            TypeSpec.builder("Inner")
+            .add_modifiers(Modifier.PUBLIC)
+            .add_type(TypeSpec.builder("System")
+                .add_modifiers(Modifier.PUBLIC).build()
+            )
+            .add_method(
+                MethodSpec.constructor_builder()
+                .add_modifiers(Modifier.PUBLIC)
+                .add_statement("$T obj = null", system_lang)
+                .add_statement("$T obj2 = null", nested_system_class_name)
+                .build()
+            )
+            .build()
+        )
+        top_class = (
+            TypeSpec.builder("Top")
+            .add_modifiers(Modifier.PUBLIC)
+            .add_type(nested_inner_class)
+            .add_method(
+                MethodSpec.constructor_builder()
+                .add_modifiers(Modifier.PUBLIC)
+                .add_statement("$T obj = null", system_lang)
+                .add_statement("$T obj2 = null", nested_system_class_name)
+                .build()
+            )
+            .build()
+        )
+
+        java_file = JavaFile.builder("com.example", top_class).indent("    ").build()
+        result = str(java_file)
+        print(result)
+        self.assertEqual(result, """\
+package com.example;
+
+import java.util.System;
+
+public class Top {
+    public Top() {
+        System obj = null;
+        Top.Inner.System obj2 = null;
+    }
+
+    public class Inner {
+        public Inner() {
+            java.util.System obj = null;
+            Top.Inner.System obj2 = null;
+        }
+
+        public class System {
+        }
+    }
+}
+""")
 
     def test_record_one_field_with_generic(self):
         """Test record with generic field."""

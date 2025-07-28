@@ -8,7 +8,7 @@ Java annotations for classes, methods, fields, parameters, etc.
 from typing import Any, Union
 
 from code_base import Code
-from util import deep_copy
+from util import deep_copy, throw_if_invalid_java_identifier
 
 from pyjavapoet.code_block import CodeBlock
 from pyjavapoet.code_writer import CodeWriter
@@ -90,6 +90,7 @@ class AnnotationSpec(Code["AnnotationSpec"]):
             self.__members = members or {}  # property name -> list of values
 
         def add_member(self, name: str, format_string: str, *args: Any) -> "AnnotationSpec.Builder":
+            throw_if_invalid_java_identifier(name)
             code_block = CodeBlock.of(format_string, *args)
 
             if name not in self.__members:
