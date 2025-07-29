@@ -1,8 +1,26 @@
 """
-FieldSpec for representing fields in Java classes and interfaces.
+Copyright (C) 2015 Square, Inc.
 
-This module defines the FieldSpec class, which is used to represent
-fields in Java classes, interfaces, and enums.
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+Modified by Matthew Au-Yeung on 2025-07-29; see changelog.md for more details.
+- Similar APIs ported from Java to Python.
+
+Changes and Current API:
+- The API is modeled after JavaPoet's FieldSpec, but adapted for Python.
+- FieldSpec is immutable; use the builder to create new instances.
+- Supports Java modifiers (from Modifier), annotations (AnnotationSpec), type information (TypeName),
+  and initializer (CodeBlock).
 """
 
 from typing import TYPE_CHECKING, Optional, Union
@@ -21,7 +39,7 @@ if TYPE_CHECKING:
 
 class FieldSpec(Code["FieldSpec"]):
     """
-    Represents a field in a class, interface, or enum.
+    Represents a field in a Java class, interface, or enum.
 
     FieldSpec instances are immutable. Use the builder to create new instances.
     """

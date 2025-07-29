@@ -1,9 +1,25 @@
 """
-Utility classes for writing Java code.
+Copyright (C) 2015 Square, Inc.
 
-This module defines:
-- LineWrapper: Handles line wrapping and indentation
-- CodeWriter: Handles emitting Java code with proper formatting
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+Modified by Matthew Au-Yeung on 2025-07-29; see changelog.md for more details.
+- Similar APIs ported from Java to Python.
+
+Changes and Current API:
+- The API is modeled after JavaPoet's CodeWriter, but adapted for Python.
+- CodeWriter is immutable; use the builder to create new instances.
+- Supports emitting Java code with proper formatting.
 """
 
 from typing import Annotated, Literal

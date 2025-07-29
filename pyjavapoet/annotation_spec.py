@@ -1,8 +1,27 @@
 """
-AnnotationSpec for representing Java annotations.
+Copyright (C) 2015 Square, Inc.
 
-This module defines the AnnotationSpec class, which is used to represent
-Java annotations for classes, methods, fields, parameters, etc.
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+Modified by Matthew Au-Yeung on 2025-07-29; see changelog.md for more details.
+- Similar APIs ported from Java to Python.
+
+Changes and Current API:
+- The API is modeled after JavaPoet's AnnotationSpec, but adapted for Python.
+- AnnotationSpec is immutable; use the builder to create new instances.
+- Supports representing Java annotations for classes, methods, fields, parameters, etc.
+- The main API:
+    - AnnotationSpec(type_name, members)
 """
 
 from typing import Any, Union
@@ -17,9 +36,10 @@ from pyjavapoet.type_name import TypeName
 
 class AnnotationSpec(Code["AnnotationSpec"]):
     """
-    Represents a Java annotation.
+    AnnotationSpec for representing Java annotations.
 
-    AnnotationSpec instances are immutable. Use the builder to create new instances.
+    This module defines the AnnotationSpec class, which is used to represent
+    Java annotations for classes, methods, fields, parameters, etc.
     """
 
     type_name: "TypeName"
