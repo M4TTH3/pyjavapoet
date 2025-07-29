@@ -120,3 +120,10 @@ and the following files were added:
 - Comprehensive test coverage with Python unittest
 - Code quality tools integration (ruff formatting)
 - Type hints and Python best practices
+
+
+## [0.1.1] - 2025-07-29
+
+### Added Features
+- Added begin_statement, add_statement_item, and end_statement to MethodSpec builder
+- Includes corresponding changes in CodeBlock

@@ -291,6 +291,32 @@ class CodeBlockTest(unittest.TestCase):
         expected = 'System.out.println(\n    "Hello, World!"\n    );\n'
         self.assertEqual(str(block), expected)
 
+    def test_multiline_statements_with_builders(self):
+        block = CodeBlock.builder().add_statement("System\n.out\n.println($S)", "Hello, World!").build()
+        block2 = (
+            CodeBlock.builder()
+            .begin_statement("System")
+            .add_statement_item(".out")
+            .add_statement_item(".println($S)", "Hello, World!")
+            .end_statement()
+            .build()
+        )
+        block3 = (
+            CodeBlock.builder()
+            .begin_statement("System")
+            .add_statement_item(".out\n.println($S)", "Hello, World!")
+            .end_statement()
+            .build()
+        )
+        expected = 'System\n    .out\n    .println("Hello, World!");\n'
+        self.assertEqual(str(block), expected)
+        self.assertEqual(str(block2), expected)
+        self.assertEqual(str(block3), expected)
+
+    def test_begin_statement_no_end_statement_throws_error(self):
+        with self.assertRaises(ValueError):
+            CodeBlock.builder().begin_statement("Hello").build()
+
     def test_emit_as_java_doc(self):
         """Test emitting as JavaDoc."""
         block = CodeBlock.of("$L", "Hello, World!")

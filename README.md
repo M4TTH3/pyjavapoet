@@ -475,17 +475,45 @@ with open("MyClass.java", "w") as f:
     java_file.write_to(f)
 ```
 
+## Extra Usages
+
+### MethodSpec
+We provide the following API alternative to .add_statement(...)
+
+**Python Code**
+```py
+MethodSpec.method_builder("test") \
+.add_statement("StringBuilder $L = new StringBuilder()", "builder") \
+.begin_statement("$L", "builder") \
+.add_statement_item(".append($S)", "hello") \
+.add_statement_item(".append($S)", "world") \
+.end_statement()
+.build()
+```
+
+**Generated Java Code**
+```java
+void test() {
+  StringBuilder builder = new StringBuilder();
+  builder
+      .append("hello")
+      .append("world");
+}
+```
+
 ## TODOs
 
 1. Add better api for beginStatement and endStatement in MethodSpec
 2. TreeSitter API to synactically validate java file
-3. Text wrapping on CodeWriter
-4. Code Block update statement to use `$[` and `$]`
-5. Name Allocator if we so desire (?)
-6. Annotation member has to be valid java identifier
-7. Handle primitive types better in ClassName i.e. validation
-8. Improve tests with exact output strings and also slim down unneeded tests
-9. Pass in TypeSpec for Types as well (for nested classes) ? It might work and we can include a self key too
+3. Add kwargs to method spec builder. Currently code block will have an issue of overwriting previous
+   keys if re-specified and so I have removed it.
+4. Text wrapping on CodeWriter
+5. Code Block update statement to use `$[` and `$]`
+6. Name Allocator if we so desire (?)
+7. Annotation member has to be valid java identifier
+8. Handle primitive types better in ClassName i.e. validation
+9. Improve tests with exact output strings and also slim down unneeded tests
+10. Pass in TypeSpec for Types as well (for nested classes) ? It might work and we can include a self key too
 
 ## License
 
