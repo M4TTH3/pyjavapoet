@@ -295,7 +295,7 @@ class TypeSpec(Code["TypeSpec"]):
         for i, type_spec in enumerate(self.types):
             type_spec.emit(code_writer)
             code_writer.emit("\n")
-            if (i < len(self.types) - 1):
+            if i < len(self.types) - 1:
                 code_writer.emit("\n")
 
         code_writer.unindent()
@@ -319,7 +319,7 @@ class TypeSpec(Code["TypeSpec"]):
             deep_copy(self.enum_constants),
             deep_copy(self.record_components),
         )
-    
+
     def __exclude_direct_inner_classes(self, code_writer: "CodeWriter") -> None:
         for type_spec in self.types:
             code_writer.exclude_scoped_class(type_spec.name)

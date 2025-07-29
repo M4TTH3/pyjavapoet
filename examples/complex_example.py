@@ -58,10 +58,7 @@ def main():
 
     # Create a counter field
     counter_field = (
-        FieldSpec.builder(TypeName.get("int"), "processCount")
-        .add_modifiers(Modifier.PRIVATE)
-        .initializer("0")
-        .build()
+        FieldSpec.builder(TypeName.get("int"), "processCount").add_modifiers(Modifier.PRIVATE).initializer("0").build()
     )
 
     # Create a constructor

@@ -20,4 +20,3 @@ from pyjavapoet.type_name import (
     WildcardTypeName,
 )
 from pyjavapoet.type_spec import TypeSpec
-

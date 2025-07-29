@@ -19,7 +19,7 @@ Modified by Matthew Au-Yeung on 2025-07-29; see changelog.md for more details.
 Changes and Current API:
 - The API is modeled after JavaPoet's MethodSpec, but adapted for Python.
 - MethodSpec is immutable; use the builder pattern to create instances.
-- Supports Java modifiers (from Modifier), annotations (AnnotationSpec), type variables, parameters (ParameterSpec), 
+- Supports Java modifiers (from Modifier), annotations (AnnotationSpec), type variables, parameters (ParameterSpec),
   exceptions, return type (TypeName), and method/constructor body (CodeBlock).
 - The main API:
     - MethodSpec(name, modifiers, parameters, return_type, exceptions, type_variables, javadoc, annotations,
@@ -29,7 +29,6 @@ Changes and Current API:
     - MethodSpec.builder(name): static method to start building a method.
 - Utility functions and validation are used to ensure correctness.
 """
-
 
 from enum import Enum, auto
 from typing import Optional, Union

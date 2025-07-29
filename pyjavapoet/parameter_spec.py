@@ -30,7 +30,6 @@ Changes and Current API:
 - Utility functions and validation (e.g., throw_if_invalid_java_identifier) are used to ensure correctness.
 """
 
-
 import re
 from typing import TYPE_CHECKING, List, Set, Union
 

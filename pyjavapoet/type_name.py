@@ -87,7 +87,7 @@ class TypeName(ABC):
             "Object": JAVA_LANG_PACKAGE,
             "String": JAVA_LANG_PACKAGE,
         }
-        | {t: '' for t in PRIMITIVE_TYPES.values()}
+        | {t: "" for t in PRIMITIVE_TYPES.values()}
         | {t: JAVA_LANG_PACKAGE for t in BOXED_PRIMITIVE_TYPES}
     )
 
@@ -135,11 +135,11 @@ class TypeName(ABC):
             and self.package_name == JAVA_LANG_PACKAGE
             and ClassName.strip_simple_name(self.simple_name) in TypeName.BOXED_PRIMITIVE_TYPES
         )
-    
+
     def is_any_primitive(self) -> bool:
         if not isinstance(self, ClassName):
             return False
-        
+
         stripped_simple_name = ClassName.strip_simple_name(self.simple_name)
         package_name = TypeName.ALL_PRIMITIVE_TYPES.get(stripped_simple_name)
         if package_name:
@@ -227,7 +227,7 @@ class ClassName(TypeName):
         if self.is_primitive():
             return ClassName(self.package_name, [TypeName.PRIMITIVE_TYPES[self.simple_name]])
         return self
-    
+
     def __ignore_import(self) -> bool:
         """
         Ignore IFF its a primitive type or a boxed primitive type

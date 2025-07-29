@@ -114,7 +114,9 @@ class ComplexTest(unittest.TestCase):
         # Print the Java file to stdout
         out = StringIO()
         java_file.write_to(out)
-        self.assertEqual(out.getvalue(), """\
+        self.assertEqual(
+            out.getvalue(),
+            """\
 /**
  * This is a generated file. Do not edit!
  */
@@ -147,4 +149,5 @@ public class DataProcessor {
     return "DataProcessor{name='" + name + "', processCount=" + processCount + "}";
   }
 }
-""")
+""",
+        )

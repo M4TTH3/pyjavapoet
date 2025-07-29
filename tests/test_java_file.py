@@ -122,9 +122,7 @@ class JavaFileTest(unittest.TestCase):
         type_spec = (
             TypeSpec.class_builder("System")
             .add_method(
-                MethodSpec.method_builder("test")
-                .add_statement("$T.out.println($S)", system_class, "test")
-                .build()
+                MethodSpec.method_builder("test").add_statement("$T.out.println($S)", system_class, "test").build()
             )
             .build()
         )
@@ -344,9 +342,7 @@ class JavaFileTest(unittest.TestCase):
         nested_inner_class = (
             TypeSpec.builder("Inner")
             .add_modifiers(Modifier.PUBLIC)
-            .add_type(TypeSpec.builder("System")
-                .add_modifiers(Modifier.PUBLIC).build()
-            )
+            .add_type(TypeSpec.builder("System").add_modifiers(Modifier.PUBLIC).build())
             .add_method(
                 MethodSpec.constructor_builder()
                 .add_modifiers(Modifier.PUBLIC)
@@ -377,7 +373,9 @@ class JavaFileTest(unittest.TestCase):
         java_file = JavaFile.builder("com.example", top_class).indent("    ").build()
         result = str(java_file)
         print(result)
-        self.assertEqual(result, """\
+        self.assertEqual(
+            result,
+            """\
 package com.example;
 
 public class Top {
@@ -401,8 +399,9 @@ public class Top {
         }
     }
 }
-""")
-        
+""",
+        )
+
     def test_inner_inner_scope_conflicts_should_use_canonical_in_inner_scope(self):
         self.maxDiff = None
         system_lang = ClassName.get("java.util", "System")
@@ -410,9 +409,7 @@ public class Top {
         nested_inner_class = (
             TypeSpec.builder("Inner")
             .add_modifiers(Modifier.PUBLIC)
-            .add_type(TypeSpec.builder("System")
-                .add_modifiers(Modifier.PUBLIC).build()
-            )
+            .add_type(TypeSpec.builder("System").add_modifiers(Modifier.PUBLIC).build())
             .add_method(
                 MethodSpec.constructor_builder()
                 .add_modifiers(Modifier.PUBLIC)
@@ -439,7 +436,9 @@ public class Top {
         java_file = JavaFile.builder("com.example", top_class).indent("    ").build()
         result = str(java_file)
         print(result)
-        self.assertEqual(result, """\
+        self.assertEqual(
+            result,
+            """\
 package com.example;
 
 import java.util.System;
@@ -460,7 +459,8 @@ public class Top {
         }
     }
 }
-""")
+""",
+        )
 
     def test_record_one_field_with_generic(self):
         """Test record with generic field."""

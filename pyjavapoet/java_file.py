@@ -24,7 +24,6 @@ Changes and Current API:
     - JavaFile(package_name, type_spec, file_comment, indent, static_imports)
 """
 
-
 import sys
 from io import StringIO
 from pathlib import Path
@@ -113,7 +112,7 @@ class JavaFile(Code["JavaFile"]):
 
         # Do a first pass to collect imports
         import_collector = CodeWriter(
-            indent=self.indent, 
+            indent=self.indent,
             type_spec_class_name=ClassName.get(self.package_name, self.type_spec.name),
         )
         self.type_spec.emit(import_collector)
