@@ -11,16 +11,17 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
 
     steps:
       - uses: actions/checkout@v4
       
       - uses: actions/setup-python@v4
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: 3.12
+
+      - uses: astral-sh/ruff-action@v3
+        run: ruff check .
+        run: ruff format --check .
           
       - uses: astral-sh/setup-uv@v5
       
@@ -30,13 +31,6 @@ jobs:
           source .venv/bin/activate
           uv sync
           pytest -v
-          
-      - name: Run linting (Python 3.12 only)
-        if: matrix.python-version == '3.12'
-        run: |
-          source .venv/bin/activate
-          ruff check .
-          ruff format --check .
 
   publish:
     if: github.event_name == 'release'
