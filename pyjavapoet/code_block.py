@@ -193,6 +193,9 @@ class CodeBlock(Code["CodeBlock"]):
         args: list[Any]
         named_args: dict[str, Any]
 
+        # Track begin_statement, add_statement_item, and end_statement
+        __statement_builder_lines = 0
+
         def __init__(
             self,
             format_parts: list[str] | None = None,
@@ -247,6 +250,26 @@ class CodeBlock(Code["CodeBlock"]):
                 self.add(";\n")
             return self
 
+        def begin_statement(self, format_string: str, *args, **kwargs) -> "CodeBlock.Builder":
+            parts = format_string.split("\n")
+            nested_items = parts[1:]
+            statement = f"{parts[0]}$2>{'\n'.join(part for part in parts[1:])}"
+            self.__statement_builder_lines = 1 + len(nested_items)
+            self.add(statement, *args, **kwargs)
+            return self
+
+        def add_statement_item(self, format_string: str, *args, **kwargs) -> "CodeBlock.Builder":
+            self.add("\n")
+            self.add(format_string, *args, **kwargs)
+            self.__statement_builder_lines += 1
+            return self
+
+        def end_statement(self) -> "CodeBlock.Builder":
+            should_dedent_str = "$2<" if self.__statement_builder_lines > 1 else ""
+            self.add(f";\n{should_dedent_str}")
+            self.__statement_builder_lines = 0
+            return self
+
         def add_comment(self, comment: str) -> "CodeBlock.Builder":
             self.add("// $L\n", comment)
             return self
@@ -267,4 +290,7 @@ class CodeBlock(Code["CodeBlock"]):
             return self
 
         def build(self) -> "CodeBlock":
+            if self.__statement_builder_lines != 0:
+                raise ValueError("Started a statement but never ended")
+
             return CodeBlock(deep_copy(self.format_parts), deep_copy(self.args), deep_copy(self.named_args))

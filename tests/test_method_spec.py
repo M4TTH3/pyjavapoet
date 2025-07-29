@@ -368,6 +368,28 @@ public static <T> T identity(T input) {
         self.assertIn("} else {", result)
         self.assertIn("System.out.println(item);", result)
 
+    def test_statement_builder(self):
+        method = (
+            MethodSpec.method_builder("test")
+            .add_statement("StringBuilder $L = new StringBuilder()", "builder")
+            .begin_statement("$L", "builder")
+            .add_statement_item(".append($S)", "hello")
+            .add_statement_item(".append($S)", "world")
+            .end_statement()
+            .build()
+        )
+        result = str(method)
+        expected = """\
+void test() {
+  StringBuilder builder = new StringBuilder();
+  builder
+      .append("hello")
+      .append("world");
+}
+"""
+        print(result)
+        self.assertEqual(result, expected)
+
     def test_method_with_parameter_specs(self):
         """Test method with ParameterSpec objects."""
         param = (

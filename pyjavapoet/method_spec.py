@@ -303,6 +303,30 @@ class MethodSpec(Code["MethodSpec"]):
                 self.__code_builder.add_statement(format_string, *args)
             return self
 
+        def begin_statement(self, format_string: str, *args) -> "MethodSpec.Builder":
+            if self.__kind == MethodSpec.Kind.COMPACT_CONSTRUCTOR:
+                raise ValueError("Compact constructors cannot have a body")
+
+            if self.__code_builder:
+                self.__code_builder.begin_statement(format_string, *args)
+            return self
+
+        def add_statement_item(self, format_string: str, *args) -> "MethodSpec.Builder":
+            if self.__kind == MethodSpec.Kind.COMPACT_CONSTRUCTOR:
+                raise ValueError("Compact constructors cannot have a body")
+
+            if self.__code_builder:
+                self.__code_builder.add_statement_item(format_string, *args)
+            return self
+
+        def end_statement(self) -> "MethodSpec.Builder":
+            if self.__kind == MethodSpec.Kind.COMPACT_CONSTRUCTOR:
+                raise ValueError("Compact constructors cannot have a body")
+
+            if self.__code_builder:
+                self.__code_builder.end_statement()
+            return self
+
         def add_comment(self, comment: str) -> "MethodSpec.Builder":
             if self.__code_builder is not None:
                 self.__code_builder.add_comment(comment)
