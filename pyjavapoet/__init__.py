@@ -2,6 +2,8 @@
 PyJavaPoet: A Python API for generating Java source files.
 """
 
+__version__ = "0.0.0"
+
 # ruff: noqa
 # PyJavaPoet top-level package: expose main classes for convenience
 from pyjavapoet.annotation_spec import AnnotationSpec

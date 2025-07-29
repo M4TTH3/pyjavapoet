@@ -1,0 +1,104 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  release:
+    types: [published]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          
+      - uses: astral-sh/setup-uv@v5
+      
+      - name: Install dependencies and run tests
+        run: |
+          uv venv
+          source .venv/bin/activate
+          uv sync
+          pytest -v
+          
+      - name: Run linting (Python 3.12 only)
+        if: matrix.python-version == '3.12'
+        run: |
+          source .venv/bin/activate
+          ruff check .
+          ruff format --check .
+
+  publish:
+    if: github.event_name == 'release'
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+      
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+          
+      - uses: astral-sh/setup-uv@v5
+      
+      - name: Install build dependencies
+        run: |
+          uv tool install build
+          uv tool install twine
+          
+      - name: Extract version from release tag
+        id: get_version
+        run: |
+          # Remove 'v' prefix if present and set version
+          VERSION=${GITHUB_REF_NAME#v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
+          
+      - name: Update version in pyproject.toml
+        run: |
+          sed -i 's/^version = .*/version = "${{ steps.get_version.outputs.version }}"/' pyproject.toml
+          
+      - name: Update version in __init__.py
+        run: |
+          sed -i 's/^__version__ = .*/__version__ = "${{ steps.get_version.outputs.version }}"/' pyjavapoet/__init__.py
+
+      - name: Verify version update
+        run: |
+          echo "pyproject.toml version:"
+          grep "^version = " pyproject.toml
+          echo "__init__.py version:"
+          grep "^__version__ = " pyjavapoet/__init__.py
+          
+      - name: Build package
+        run: |
+          uv tool run build
+          
+      - name: Check package contents
+        run: |
+          uv tool run twine check dist/*
+          
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          skip-existing: true
+          verbose: true
+          
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-files
+          path: dist/
+          retention-days: 30
