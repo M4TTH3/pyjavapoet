@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "pyjavapoet"
 version = "0.1.0"
 authors = [
-    {name = "Matthew Au-Yeung", email = "matthew.au-yeung@mechanical-orchard.com"},
+    {name = "Matthew Au-Yeung", email = "matthewauyeung04@gmail.com"},
 ]
 description = "A Python API for generating Java source files"
 readme = "README.md"
@@ -25,7 +25,7 @@ test = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/mechanical-orchard/pyjavapoet"
+"Homepage" = "https://github.com/m4tth3/pyjavapoet"
 
 [tool.ruff]
 line-length = 120
