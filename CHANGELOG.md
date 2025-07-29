@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated README structure with clear Python-to-Java code mappings
 - Enhanced documentation with working examples
 
-## [0.0.1] - 2025-07-29
+## [0.1.0] - 2025-07-29
 
 Initial port of JavaPoet from Java to Python, maintaining the fluent builder pattern and core functionality while adapting for Python conventions.
 

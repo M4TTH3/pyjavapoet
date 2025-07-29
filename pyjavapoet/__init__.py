@@ -21,4 +21,3 @@ from pyjavapoet.type_name import (
 )
 from pyjavapoet.type_spec import TypeSpec
 
-__version__ = "0.1.0"
