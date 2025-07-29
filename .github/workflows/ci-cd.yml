@@ -20,11 +20,10 @@ jobs:
           python-version: 3.12
 
       - uses: astral-sh/ruff-action@v3
-        run: ruff check .
-        run: ruff format --check .
-          
+      - run: ruff check .
+      - run: ruff format --check .
+
       - uses: astral-sh/setup-uv@v5
-      
       - name: Install dependencies and run tests
         run: |
           uv venv
