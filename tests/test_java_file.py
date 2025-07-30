@@ -681,9 +681,9 @@ class JavaFileReadWriteTest(unittest.TestCase):
         """Test file with various types of comments."""
         method = (
             MethodSpec.method_builder("documented")
-            .add_javadoc("This is a documented method.")
-            .add_javadoc("@param none no parameters")
-            .add_javadoc("@return nothing")
+            .add_javadoc_line("This is a documented method.")
+            .add_javadoc_line("@param none no parameters")
+            .add_javadoc_line("@return nothing")
             .add_modifiers(Modifier.PUBLIC)
             .returns("void")
             .add_statement("// Single line comment")
@@ -692,7 +692,10 @@ class JavaFileReadWriteTest(unittest.TestCase):
         )
 
         type_spec = (
-            TypeSpec.class_builder("Commented").add_javadoc("This is a documented class.\n").add_method(method).build()
+            TypeSpec.class_builder("Commented")
+            .add_javadoc_line("This is a documented class.\n")
+            .add_method(method)
+            .build()
         )
 
         java_file = JavaFile.builder("com.example", type_spec).add_generated_by("pyjavapoet").build()

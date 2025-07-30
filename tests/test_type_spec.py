@@ -370,10 +370,10 @@ class TypeSpecTest(unittest.TestCase):
         """Test class with javadoc."""
         clazz = (
             TypeSpec.class_builder("Documented")
-            .add_javadoc("This is a documented class.\n")
-            .add_javadoc("\n")
-            .add_javadoc("@author PyJavaPoet\n")
-            .add_javadoc("@since 1.0\n")
+            .add_javadoc_line("This is a documented class.\n")
+            .add_javadoc_line("\n")
+            .add_javadoc_line("@author PyJavaPoet\n")
+            .add_javadoc_line("@since 1.0\n")
             .add_modifiers(Modifier.PUBLIC)
             .build()
         )

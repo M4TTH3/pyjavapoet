@@ -26,12 +26,11 @@ Changes and Current API:
 
 from typing import Any, Union
 
-from code_base import Code
-from util import deep_copy, throw_if_invalid_java_identifier
-
+from pyjavapoet.code_base import Code
 from pyjavapoet.code_block import CodeBlock
 from pyjavapoet.code_writer import CodeWriter
 from pyjavapoet.type_name import TypeName
+from pyjavapoet.util import deep_copy, throw_if_invalid_java_identifier
 
 
 class AnnotationSpec(Code["AnnotationSpec"]):

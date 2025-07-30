@@ -305,18 +305,18 @@ component = AnnotationSpec.builder(ClassName.get("org.springframework.stereotype
 service = TypeSpec.class_builder("UserService") \
     .add_annotation(component) \
     .add_modifiers(Modifier.PUBLIC) \
-    .add_javadoc("Service class for managing users.\n") \
-    .add_javadoc("\n") \
-    .add_javadoc("@author PyJavaPoet\n") \
-    .add_javadoc("@since 1.0\n") \
+    .add_javadoc_line("Service class for managing users.") \
+    .add_javadoc_line() \
+    .add_javadoc_line("@author PyJavaPoet") \
+    .add_javadoc_line("@since 1.0") \
     .add_field(FieldSpec.builder(ClassName.get("java.lang", "String"), "name")
                .add_annotation(nullable)
                .add_modifiers(Modifier.PRIVATE)
                .build()) \
     .add_method(MethodSpec.method_builder("getName")
-                .add_javadoc("Gets the user name.\n")
-                .add_javadoc("\n")
-                .add_javadoc("@return the user name, or null if not set\n")
+                .add_javadoc_line("Gets the user name.")
+                .add_javadoc_line()
+                .add_javadoc_line("@return the user name, or null if not set")
                 .add_annotation(nullable)
                 .add_modifiers(Modifier.PUBLIC)
                 .returns(ClassName.get("java.lang", "String"))
@@ -428,7 +428,53 @@ public class ItemProcessor {
 }
 ```
 
-### 7. Records (Java 14+)
+### 7. Statement Chaining
+
+PyJavaPoet supports fluent method chaining for building statements:
+
+**Python Code:**
+```python
+from pyjavapoet import MethodSpec, TypeSpec, JavaFile, Modifier
+
+# Method with statement chaining
+method = MethodSpec.method_builder("buildString") \
+    .add_modifiers(Modifier.PUBLIC) \
+    .returns("String") \
+    .add_statement("StringBuilder $L = new StringBuilder()", "builder") \
+    .begin_statement_chain("$L", "builder") \
+    .add_chained_item(".append($S)", "Hello") \
+    .add_chained_item(".append($S)", " ") \
+    .add_chained_item(".append($S)", "World") \
+    .end_statement_chain() \
+    .add_statement("return $L.toString()", "builder") \
+    .build()
+
+clazz = TypeSpec.class_builder("StringBuilderExample") \
+    .add_modifiers(Modifier.PUBLIC) \
+    .add_method(method) \
+    .build()
+
+java_file = JavaFile.builder("com.example", clazz).build()
+print(java_file)
+```
+
+**Generated Java Code:**
+```java
+package com.example;
+
+public class StringBuilderExample {
+  public String buildString() {
+    StringBuilder builder = new StringBuilder();
+    builder
+        .append("Hello")
+        .append(" ")
+        .append("World");
+    return builder.toString();
+  }
+}
+```
+
+### 8. Records (Java 14+)
 
 **Python Code:**
 ```python
@@ -456,7 +502,7 @@ public record Point(int x, int y) implements Serializable {
 }
 ```
 
-### 8. Writing Files to Disk
+### 9. Writing Files to Disk
 
 ```python
 from pyjavapoet import JavaFile
@@ -475,45 +521,18 @@ with open("MyClass.java", "w") as f:
     java_file.write_to(f)
 ```
 
-## Extra Usages
-
-### MethodSpec
-We provide the following API alternative to .add_statement(...)
-
-**Python Code**
-```py
-MethodSpec.method_builder("test") \
-.add_statement("StringBuilder $L = new StringBuilder()", "builder") \
-.begin_statement("$L", "builder") \
-.add_statement_item(".append($S)", "hello") \
-.add_statement_item(".append($S)", "world") \
-.end_statement()
-.build()
-```
-
-**Generated Java Code**
-```java
-void test() {
-  StringBuilder builder = new StringBuilder();
-  builder
-      .append("hello")
-      .append("world");
-}
-```
-
 ## TODOs
 
-1. Add better api for beginStatement and endStatement in MethodSpec
-2. TreeSitter API to synactically validate java file
-3. Add kwargs to method spec builder. Currently code block will have an issue of overwriting previous
+1. TreeSitter API to synactically validate java file
+2. Add kwargs to method spec builder. Currently code block will have an issue of overwriting previous
    keys if re-specified and so I have removed it.
-4. Text wrapping on CodeWriter
-5. Code Block update statement to use `$[` and `$]`
-6. Name Allocator if we so desire (?)
-7. Annotation member has to be valid java identifier
-8. Handle primitive types better in ClassName i.e. validation
-9. Improve tests with exact output strings and also slim down unneeded tests
-10. Pass in TypeSpec for Types as well (for nested classes) ? It might work and we can include a self key too
+3. Text wrapping on CodeWriter
+4. Code Block update statement to use `$[` and `$]`
+5. Name Allocator if we so desire (?)
+6. Annotation member has to be valid java identifier
+7. Handle primitive types better in ClassName i.e. validation
+8. Improve tests with exact output strings and also slim down unneeded tests
+9.  Pass in TypeSpec for Types as well (for nested classes) ? It might work and we can include a self key too
 
 ## License
 

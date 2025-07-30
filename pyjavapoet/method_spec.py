@@ -33,9 +33,8 @@ Changes and Current API:
 from enum import Enum, auto
 from typing import Optional, Union
 
-from code_base import Code
-
 from pyjavapoet.annotation_spec import AnnotationSpec
+from pyjavapoet.code_base import Code
 from pyjavapoet.code_block import CodeBlock
 from pyjavapoet.code_writer import EMPTY_STRING, CodeWriter
 from pyjavapoet.modifier import Modifier
@@ -92,7 +91,7 @@ class MethodSpec(Code["MethodSpec"]):
 
     def emit(self, code_writer: "CodeWriter") -> None:
         # Emit Javadoc
-        if self.javadoc is not None:
+        if self.javadoc:
             self.javadoc.emit_javadoc(code_writer)
             code_writer.emit("\n")
 
@@ -279,7 +278,7 @@ class MethodSpec(Code["MethodSpec"]):
             self.__type_variables.append(type_variable)
             return self
 
-        def add_javadoc(self, format_string: str = EMPTY_STRING, *args) -> "MethodSpec.Builder":
+        def add_javadoc_line(self, format_string: str = EMPTY_STRING, *args) -> "MethodSpec.Builder":
             self.__javadoc = CodeBlock.add_javadoc(self.__javadoc, format_string, *args)
             return self
 
@@ -303,7 +302,7 @@ class MethodSpec(Code["MethodSpec"]):
                 self.__code_builder.add_statement(format_string, *args)
             return self
 
-        def begin_statement(self, format_string: str, *args) -> "MethodSpec.Builder":
+        def begin_statement_chain(self, format_string: str, *args) -> "MethodSpec.Builder":
             if self.__kind == MethodSpec.Kind.COMPACT_CONSTRUCTOR:
                 raise ValueError("Compact constructors cannot have a body")
 
@@ -311,7 +310,7 @@ class MethodSpec(Code["MethodSpec"]):
                 self.__code_builder.begin_statement(format_string, *args)
             return self
 
-        def add_statement_item(self, format_string: str, *args) -> "MethodSpec.Builder":
+        def add_chained_item(self, format_string: str, *args) -> "MethodSpec.Builder":
             if self.__kind == MethodSpec.Kind.COMPACT_CONSTRUCTOR:
                 raise ValueError("Compact constructors cannot have a body")
 
@@ -319,7 +318,7 @@ class MethodSpec(Code["MethodSpec"]):
                 self.__code_builder.add_statement_item(format_string, *args)
             return self
 
-        def end_statement(self) -> "MethodSpec.Builder":
+        def end_statement_chain(self) -> "MethodSpec.Builder":
             if self.__kind == MethodSpec.Kind.COMPACT_CONSTRUCTOR:
                 raise ValueError("Compact constructors cannot have a body")
 
