@@ -521,6 +521,510 @@ with open("MyClass.java", "w") as f:
     java_file.write_to(f)
 ```
 
+## API Reference
+
+This section provides detailed documentation for each PyJavaPoet component with examples and their generated output.
+
+### TypeName Classes
+
+TypeName is the foundation for representing Java types in PyJavaPoet.
+
+#### ClassName
+
+Represents class and interface types, including nested classes.
+
+```python
+from pyjavapoet import ClassName
+
+# Basic class names
+string_class = ClassName.get("java.lang", "String")
+print(str(string_class))  # Output: java.lang.String
+
+list_class = ClassName.get("java.util", "List")  
+print(str(list_class))    # Output: java.util.List
+
+# Nested classes
+nested_class = ClassName.get("com.example", "Outer", "Inner")
+print(str(nested_class))  # Output: com.example.Outer.Inner
+
+# Common predefined types
+print(str(ClassName.OBJECT))    # Output: java.lang.Object
+print(str(ClassName.STRING))    # Output: java.lang.String
+```
+
+#### TypeName
+
+Base class for all type representations, provides common type constants.
+
+```python
+from pyjavapoet import TypeName
+
+# Primitive types
+print(str(TypeName.get("int")))     # Output: int
+print(str(TypeName.get("boolean"))) # Output: boolean
+print(str(TypeName.get("void")))    # Output: void
+
+# Predefined constants
+print(str(TypeName.INT))     # Output: int
+print(str(TypeName.BOOLEAN)) # Output: boolean
+print(str(TypeName.VOID))    # Output: void
+print(str(TypeName.STRING))  # Output: java.lang.String
+```
+
+#### ArrayTypeName
+
+Represents array types with support for multi-dimensional arrays.
+
+```python
+from pyjavapoet import ArrayTypeName, ClassName
+
+string_class = ClassName.get("java.lang", "String")
+
+# Single-dimensional array
+string_array = ArrayTypeName.of(string_class)
+print(str(string_array))     # Output: String[]
+
+# Multi-dimensional arrays
+int_2d_array = ArrayTypeName.of(ArrayTypeName.of("int"))
+print(str(int_2d_array))     # Output: int[][]
+
+# Primitive arrays
+int_array = ArrayTypeName.of("int")
+print(str(int_array))        # Output: int[]
+```
+
+#### ParameterizedTypeName
+
+Represents generic types with type arguments.
+
+```python
+from pyjavapoet import ParameterizedTypeName, ClassName
+
+list_class = ClassName.get("java.util", "List")
+string_class = ClassName.get("java.lang", "String")
+integer_class = ClassName.get("java.lang", "Integer")
+
+# List<String>
+list_of_strings = ParameterizedTypeName.get(list_class, string_class)
+print(str(list_of_strings))  # Output: List<String>
+
+# Alternative syntax
+list_of_strings2 = list_class.with_type_arguments(string_class)
+print(str(list_of_strings2)) # Output: List<String>
+
+# Map<String, Integer>  
+map_class = ClassName.get("java.util", "Map")
+map_string_int = ParameterizedTypeName.get(map_class, string_class, integer_class)
+print(str(map_string_int))   # Output: Map<String, Integer>
+
+# Nested parameterized types: Map<String, List<String>>
+list_of_strings = ParameterizedTypeName.get(list_class, string_class)
+map_nested = ParameterizedTypeName.get(map_class, string_class, list_of_strings)
+print(str(map_nested))       # Output: Map<String, List<String>>
+```
+
+#### TypeVariableName
+
+Represents generic type variables with optional bounds.
+
+```python
+from pyjavapoet import TypeVariableName, ClassName
+
+# Basic type variable
+t_var = TypeVariableName.get("T")
+print(str(t_var))            # Output: T
+
+# Bounded type variable
+number_class = ClassName.get("java.lang", "Number")
+bounded_t = TypeVariableName.get("T", number_class)
+print(str(bounded_t))        # Output: T extends Number
+
+# Multiple bounds
+comparable_class = ClassName.get("java.lang", "Comparable")
+serializable_class = ClassName.get("java.io", "Serializable")
+multi_bounded = TypeVariableName.get("T", number_class, comparable_class, serializable_class)
+print(str(multi_bounded))    # Output: T extends Number & Comparable & Serializable
+```
+
+#### WildcardTypeName
+
+Represents wildcard types with upper and lower bounds.
+
+```python
+from pyjavapoet import WildcardTypeName, ClassName
+
+number_class = ClassName.get("java.lang", "Number")
+object_class = ClassName.get("java.lang", "Object")
+
+# ? extends Number
+extends_number = WildcardTypeName.subtypes_of(number_class)
+print(str(extends_number))   # Output: ? extends Number
+
+# ? super Number
+super_number = WildcardTypeName.supertypes_of(number_class)
+print(str(super_number))     # Output: ? super Number
+
+# Unbounded wildcard (? extends Object becomes just ?)
+unbounded = WildcardTypeName.subtypes_of(object_class)
+print(str(unbounded))        # Output: ?
+```
+
+### Specification Classes
+
+#### FieldSpec
+
+Represents field declarations with modifiers, initializers, and annotations.
+
+```python
+from pyjavapoet import FieldSpec, Modifier, ClassName, AnnotationSpec
+
+# Basic field
+basic_field = FieldSpec.builder("int", "count").build()
+print(str(basic_field))      # Output: int count;
+
+# Field with modifiers
+private_field = FieldSpec.builder(ClassName.get("java.lang", "String"), "name") \
+    .add_modifiers(Modifier.PRIVATE, Modifier.FINAL) \
+    .build()
+print(str(private_field))    # Output: private final String name;
+
+# Field with initializer
+initialized_field = FieldSpec.builder("int", "counter") \
+    .add_modifiers(Modifier.PRIVATE, Modifier.STATIC) \
+    .initializer("$L", 0) \
+    .build()
+print(str(initialized_field)) # Output: private static int counter = 0;
+
+# Field with annotation
+nullable = AnnotationSpec.builder(ClassName.get("javax.annotation", "Nullable")).build()
+annotated_field = FieldSpec.builder(ClassName.get("java.lang", "String"), "value") \
+    .add_annotation(nullable) \
+    .build()
+print(str(annotated_field))  # Output: @Nullable\nString value;
+
+# Generic field
+list_class = ClassName.get("java.util", "List")
+string_class = ClassName.get("java.lang", "String")
+list_field = FieldSpec.builder(list_class.with_type_arguments(string_class), "items") \
+    .add_modifiers(Modifier.PRIVATE, Modifier.FINAL) \
+    .initializer("new $T<>()", ClassName.get("java.util", "ArrayList")) \
+    .build()
+print(str(list_field))       # Output: private final List<String> items = new ArrayList<>();
+```
+
+#### ParameterSpec
+
+Represents method/constructor parameters with annotations.
+
+```python
+from pyjavapoet import ParameterSpec, ClassName, AnnotationSpec
+
+# Basic parameter
+basic_param = ParameterSpec.builder("int", "value").build()
+print(str(basic_param))      # Output: int value
+
+# Parameter with annotation
+nullable = AnnotationSpec.builder(ClassName.get("javax.annotation", "Nullable")).build()
+annotated_param = ParameterSpec.builder(ClassName.get("java.lang", "String"), "name") \
+    .add_annotation(nullable) \
+    .build()
+print(str(annotated_param))  # Output: @Nullable String name
+
+# Generic parameter
+list_class = ClassName.get("java.util", "List")
+string_class = ClassName.get("java.lang", "String")
+generic_param = ParameterSpec.builder(list_class.with_type_arguments(string_class), "items").build()
+print(str(generic_param))    # Output: List<String> items
+
+# Varargs parameter  
+varargs_param = ParameterSpec.builder("String...", "args").build()
+print(str(varargs_param))    # Output: String... args
+```
+
+#### MethodSpec
+
+Represents method and constructor declarations with full support for Java features.
+
+```python
+from pyjavapoet import MethodSpec, Modifier, ClassName, TypeVariableName, ParameterSpec
+
+# Basic method
+basic_method = MethodSpec.method_builder("getName") \
+    .add_modifiers(Modifier.PUBLIC) \
+    .returns(ClassName.get("java.lang", "String")) \
+    .add_statement("return this.name") \
+    .build()
+print(str(basic_method))
+# Output:
+# public String getName() {
+#   return this.name;
+# }
+
+# Constructor
+constructor = MethodSpec.constructor_builder() \
+    .add_modifiers(Modifier.PUBLIC) \
+    .add_parameter(ClassName.get("java.lang", "String"), "name") \
+    .add_statement("this.name = name") \
+    .build()
+print(str(constructor))
+# Output:
+# public <init>(String name) {
+#   this.name = name;
+# }
+
+# Generic method
+t_var = TypeVariableName.get("T")
+generic_method = MethodSpec.method_builder("identity") \
+    .add_type_variable(t_var) \
+    .add_modifiers(Modifier.PUBLIC, Modifier.STATIC) \
+    .returns(t_var) \
+    .add_parameter(t_var, "input") \
+    .add_statement("return input") \
+    .build()
+print(str(generic_method))
+# Output:
+# public static <T> T identity(T input) {
+#   return input;
+# }
+
+# Method with Javadoc
+documented_method = MethodSpec.method_builder("calculate") \
+    .add_javadoc_line("Calculates the result.") \
+    .add_javadoc_line() \
+    .add_javadoc_line("@param input the input value") \
+    .add_javadoc_line("@return the calculated result") \
+    .add_modifiers(Modifier.PUBLIC) \
+    .returns("int") \
+    .add_parameter("int", "input") \
+    .add_statement("return input * 2") \
+    .build()
+print(str(documented_method))
+# Output:
+# /**
+#  * Calculates the result.
+#  * 
+#  * @param input the input value
+#  * @return the calculated result
+#  */
+# public int calculate(int input) {
+#   return input * 2;
+# }
+
+# Abstract method (no body)
+abstract_method = MethodSpec.method_builder("process") \
+    .add_modifiers(Modifier.PUBLIC, Modifier.ABSTRACT) \
+    .returns("void") \
+    .add_parameter("Object", "data") \
+    .build()
+print(str(abstract_method))
+# Output: public abstract void process(Object data);
+```
+
+#### AnnotationSpec
+
+Represents Java annotations with members and values.
+
+```python
+from pyjavapoet import AnnotationSpec, ClassName
+
+# Basic annotation
+override = AnnotationSpec.builder(ClassName.get("java.lang", "Override")).build()
+print(str(override))         # Output: @Override
+
+# Annotation with single value
+component = AnnotationSpec.builder(ClassName.get("org.springframework.stereotype", "Component")) \
+    .add_member("value", "$S", "userService") \
+    .build()
+print(str(component))        # Output: @Component("userService")
+
+# Annotation with multiple members
+request_mapping = AnnotationSpec.builder(ClassName.get("org.springframework.web.bind.annotation", "RequestMapping")) \
+    .add_member("value", "$S", "/api/users") \
+    .add_member("method", "$T.GET", ClassName.get("org.springframework.web.bind.annotation", "RequestMethod")) \
+    .build()
+print(str(request_mapping))
+# Output: @RequestMapping(value = "/api/users", method = RequestMethod.GET)
+
+# Annotation with array values
+suppress_warnings = AnnotationSpec.builder(ClassName.get("java.lang", "SuppressWarnings")) \
+    .add_member("value", "{$S, $S}", "unchecked", "rawtypes") \
+    .build()
+print(str(suppress_warnings)) # Output: @SuppressWarnings({"unchecked", "rawtypes"})
+
+# Shorthand for single-member annotations
+get_annotation = AnnotationSpec.get(ClassName.get("java.lang", "Override"))
+print(str(get_annotation))   # Output: @Override
+```
+
+#### TypeSpec
+
+Represents type declarations: classes, interfaces, enums, annotations, and records.
+
+```python
+from pyjavapoet import TypeSpec, Modifier, ClassName, FieldSpec, MethodSpec
+
+# Basic class
+basic_class = TypeSpec.class_builder("BasicClass").build()
+print(str(basic_class))
+# Output:
+# class BasicClass {
+# }
+
+# Class with inheritance and interfaces
+extended_class = TypeSpec.class_builder("MyClass") \
+    .add_modifiers(Modifier.PUBLIC) \
+    .superclass(ClassName.get("com.example", "BaseClass")) \
+    .add_superinterface(ClassName.get("java.io", "Serializable")) \
+    .add_superinterface(ClassName.get("java.lang", "Cloneable")) \
+    .build()
+print(str(extended_class))
+# Output:
+# public class MyClass extends BaseClass implements Serializable, Cloneable {
+# }
+
+# Interface
+interface = TypeSpec.interface_builder("Drawable") \
+    .add_modifiers(Modifier.PUBLIC) \
+    .add_method(MethodSpec.method_builder("draw")
+                .add_modifiers(Modifier.ABSTRACT, Modifier.PUBLIC)
+                .returns("void")
+                .build()) \
+    .build()
+print(str(interface))
+# Output:
+# public interface Drawable {
+#   public abstract void draw();
+# }
+
+# Enum
+color_enum = TypeSpec.enum_builder("Color") \
+    .add_modifiers(Modifier.PUBLIC) \
+    .add_enum_constant("RED") \
+    .add_enum_constant("GREEN") \
+    .add_enum_constant("BLUE") \
+    .build()
+print(str(color_enum))
+# Output:
+# public enum Color {
+#   RED,
+#   GREEN,
+#   BLUE
+# }
+
+# Annotation type
+annotation_type = TypeSpec.annotation_builder("MyAnnotation") \
+    .add_modifiers(Modifier.PUBLIC) \
+    .add_method(MethodSpec.method_builder("value")
+                .add_modifiers(Modifier.ABSTRACT, Modifier.PUBLIC)
+                .returns(ClassName.get("java.lang", "String"))
+                .build()) \
+    .build()
+print(str(annotation_type))
+# Output:
+# public @interface MyAnnotation {
+#   public abstract String value();
+# }
+
+# Record (Java 14+)
+point_record = TypeSpec.record_builder("Point") \
+    .add_modifiers(Modifier.PUBLIC) \
+    .add_record_component(ParameterSpec.builder("int", "x").build()) \
+    .add_record_component(ParameterSpec.builder("int", "y").build()) \
+    .build()
+print(str(point_record))
+# Output:
+# public record Point(int x, int y) {
+# }
+
+# Anonymous class
+anonymous = TypeSpec.anonymous_class_builder("") \
+    .add_superinterface(ClassName.get("java.lang", "Runnable")) \
+    .add_method(MethodSpec.method_builder("run")
+                .add_modifiers(Modifier.PUBLIC)
+                .returns("void")
+                .add_statement("System.out.println($S)", "Running!")
+                .build()) \
+    .build()
+print(str(anonymous))
+# Output:
+# new Runnable() {
+#   @Override
+#   public void run() {
+#     System.out.println("Running!");
+#   }
+# }
+```
+
+#### JavaFile
+
+Represents a complete Java source file with package, imports, and type declarations.
+
+```python
+from pyjavapoet import JavaFile, TypeSpec, Modifier
+
+# Basic Java file
+simple_class = TypeSpec.class_builder("HelloWorld") \
+    .add_modifiers(Modifier.PUBLIC) \
+    .build()
+
+java_file = JavaFile.builder("com.example", simple_class).build()
+print(str(java_file))
+# Output:
+# package com.example;
+# 
+# public class HelloWorld {
+# }
+
+# Java file with imports and file comment
+java_file_with_imports = JavaFile.builder("com.example", simple_class) \
+    .add_file_comment("This is a generated file.") \
+    .add_file_comment("Do not edit manually.") \
+    .add_static_import(ClassName.get("java.lang", "System"), "out") \
+    .build()
+print(str(java_file_with_imports))
+# Output:  
+# /**
+#  * This is a generated file.
+#  * Do not edit manually.
+#  */
+# package com.example;
+# 
+# import static java.lang.System.out;
+# 
+# public class HelloWorld {
+# }
+```
+
+### Builder Pattern Methods
+
+All spec classes follow the builder pattern with these common methods:
+
+- **`.builder()`** - Creates a new builder instance
+- **`.to_builder()`** - Creates a builder from existing spec  
+- **`.build()`** - Builds the final immutable spec
+- **`.add_*(...)`** - Adds elements (modifiers, annotations, etc.)
+- **`.returns(type)`** - Sets return type (MethodSpec only)
+- **`.add_statement(format, ...args)`** - Adds code statements
+- **`.begin_control_flow()`** / **`.end_control_flow()`** - Control structures
+
+### Placeholder Syntax
+
+PyJavaPoet uses placeholder syntax for safe code generation:
+
+- **`$T`** - Type (TypeName, ClassName, etc.)
+- **`$S`** - String literal (automatically escaped)  
+- **`$L`** - Literal (numbers, variables, etc.)
+- **`$N`** - Name (field/method names from specs)
+
+```python
+# Examples of placeholder usage
+method = MethodSpec.method_builder("example") \
+    .add_statement("$T list = new $T<>()", ClassName.get("java.util", "List"), ClassName.get("java.util", "ArrayList")) \
+    .add_statement("list.add($S)", "Hello World") \
+    .add_statement("int size = $L", 42) \
+    .build()
+```
+
 ## TODOs
 
 1. TreeSitter API to synactically validate java file
