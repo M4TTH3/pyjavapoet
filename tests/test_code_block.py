@@ -16,9 +16,8 @@ limitations under the License.
 
 import unittest
 
-from code_writer import CodeWriter
-
 from pyjavapoet.code_block import CodeBlock
+from pyjavapoet.code_writer import CodeWriter
 from pyjavapoet.type_name import ClassName
 
 

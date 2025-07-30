@@ -125,5 +125,6 @@ and the following files were added:
 ## [0.1.1] - 2025-07-29
 
 ### Added Features
-- Added begin_statement, add_statement_item, and end_statement to MethodSpec builder
+- Added begin_statement_chain, add_chained_item, and end_statement_chain to MethodSpec builder
 - Includes corresponding changes in CodeBlock
+- Switched add_javadoc to add_javadoc_line

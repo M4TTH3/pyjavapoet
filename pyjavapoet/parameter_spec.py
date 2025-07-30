@@ -33,12 +33,11 @@ Changes and Current API:
 import re
 from typing import TYPE_CHECKING, List, Set, Union
 
-from code_base import Code
-from util import deep_copy, throw_if_invalid_java_identifier
-
 from pyjavapoet.annotation_spec import AnnotationSpec
+from pyjavapoet.code_base import Code
 from pyjavapoet.modifier import Modifier
 from pyjavapoet.type_name import ArrayTypeName, TypeName, TypeVariableName
+from pyjavapoet.util import deep_copy, throw_if_invalid_java_identifier
 
 if TYPE_CHECKING:
     from pyjavapoet.code_writer import CodeWriter

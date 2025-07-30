@@ -29,11 +29,10 @@ This module defines the TypeSpec class, which is used to represent Java types:
 from enum import Enum, auto
 from typing import Optional, Union
 
-from code_base import Code
-
 from pyjavapoet.annotation_spec import AnnotationSpec
+from pyjavapoet.code_base import Code
 from pyjavapoet.code_block import CodeBlock
-from pyjavapoet.code_writer import CodeWriter
+from pyjavapoet.code_writer import EMPTY_STRING, CodeWriter
 from pyjavapoet.field_spec import FieldSpec
 from pyjavapoet.method_spec import MethodSpec
 from pyjavapoet.modifier import Modifier
@@ -448,7 +447,7 @@ class TypeSpec(Code["TypeSpec"]):
             self.__permitted_subclasses.append(subclass)
             return self
 
-        def add_javadoc(self, format_string: str, *args) -> "TypeSpec.Builder":
+        def add_javadoc_line(self, format_string: str = EMPTY_STRING, *args) -> "TypeSpec.Builder":
             self.__javadoc = CodeBlock.add_javadoc(self.__javadoc, format_string, *args)
             return self
 

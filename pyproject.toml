@@ -40,8 +40,8 @@ known-first-party = ["pyjavapoet"]
 lines-between-types = 0
 
 [tool.setuptools]
-package-dir = { "" = "pyjavapoet" }
-
+package-dir = { "pyjavapoet" = "pyjavapoet" }
+packages = ["pyjavapoet"]
 
 [tool.setuptools.package-data]
 # Add resources if required

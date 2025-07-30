@@ -25,11 +25,10 @@ Changes and Current API:
 import re
 from typing import Any, Optional
 
-from code_base import Code
-from util import deep_copy
-
+from pyjavapoet.code_base import Code
 from pyjavapoet.code_writer import CodeWriter
 from pyjavapoet.type_name import TypeName
+from pyjavapoet.util import deep_copy
 
 
 class CodeBlock(Code["CodeBlock"]):
