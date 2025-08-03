@@ -15,16 +15,6 @@ limitations under the License.
 
 Modified by Matthew Au-Yeung on 2025-07-29; see changelog.md for more details.
 - Similar APIs ported from Java to Python.
-
-Classes representing Java types in PyPoet (Note some files collapsed into this one).
-
-This module defines classes for representing Java types:
-- TypeName: Base class for all types
-- ClassName: Represents a class or interface type
-- ArrayTypeName: Represents an array type
-- ParameterizedTypeName: Represents a type with generic arguments
-- TypeVariableName: Represents a type variable (generic type parameter)
-- WildcardTypeName: Represents a wildcard type (e.g., ? extends Number)
 """
 
 from abc import ABC, abstractmethod
@@ -50,7 +40,7 @@ class TypeName(ABC):
     FLOAT: "ClassName"
     SHORT: "ClassName"
     BYTE: "ClassName"
-    CHARACTER: "ClassName"
+    CHAR: "ClassName"
     BOOLEAN: "ClassName"
     VOID: "ClassName"
     OBJECT: "ClassName"
@@ -225,14 +215,10 @@ class ClassName(TypeName):
 
     def to_type_param(self) -> "TypeName":
         if self.is_primitive():
-            return ClassName(self.package_name, [TypeName.PRIMITIVE_TYPES[self.simple_name]])
+            boxed_name = TypeName.PRIMITIVE_TYPES[self.simple_name]
+            package_name = TypeName.ALL_PRIMITIVE_TYPES[boxed_name]
+            return ClassName.get(package_name, boxed_name)
         return self
-
-    def __ignore_import(self) -> bool:
-        """
-        Ignore IFF its a primitive type or a boxed primitive type
-        """
-        return self.nested_name in TypeName.ALL_PRIMITIVE_TYPES
 
     @property
     def reflection_name(self) -> str:
@@ -521,14 +507,14 @@ class WildcardTypeName(TypeName):
         return WildcardTypeName(lower_bounds=[TypeName.get(bound) for bound in lower_bounds])
 
 
-TypeName.INTEGER = ClassName.get("", "Integer")
-TypeName.LONG = ClassName.get("", "Long")
-TypeName.DOUBLE = ClassName.get("", "Double")
-TypeName.FLOAT = ClassName.get("", "Float")
-TypeName.SHORT = ClassName.get("", "Short")
-TypeName.BYTE = ClassName.get("", "Byte")
-TypeName.CHARACTER = ClassName.get("", "Character")
-TypeName.BOOLEAN = ClassName.get("", "Boolean")
-TypeName.VOID = ClassName.get("", "Void")
+TypeName.INTEGER = ClassName.get("", "int")
+TypeName.LONG = ClassName.get("", "long")
+TypeName.DOUBLE = ClassName.get("", "double")
+TypeName.FLOAT = ClassName.get("", "float")
+TypeName.SHORT = ClassName.get("", "short")
+TypeName.BYTE = ClassName.get("", "byte")
+TypeName.CHAR = ClassName.get("", "char")
+TypeName.BOOLEAN = ClassName.get("", "boolean")
+TypeName.VOID = ClassName.get("", "void")
 TypeName.OBJECT = ClassName.get("", "Object")
 TypeName.STRING = ClassName.get("", "String")

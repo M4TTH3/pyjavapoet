@@ -15,12 +15,6 @@ limitations under the License.
 
 Modified by Matthew Au-Yeung on 2025-07-29; see changelog.md for more details.
 - Similar APIs ported from Java to Python.
-
-Changes and Current API:
-- The API is modeled after JavaPoet's FieldSpec, but adapted for Python.
-- FieldSpec is immutable; use the builder to create new instances.
-- Supports Java modifiers (from Modifier), annotations (AnnotationSpec), type information (TypeName),
-  and initializer (CodeBlock).
 """
 
 from typing import TYPE_CHECKING, Optional, Union

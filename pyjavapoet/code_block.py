@@ -15,11 +15,6 @@ limitations under the License.
 
 Modified by Matthew Au-Yeung on 2025-07-29; see changelog.md for more details.
 - Similar APIs ported from Java to Python.
-
-Changes and Current API:
-- The API is modeled after JavaPoet's CodeBlock, but adapted for Python.
-- CodeBlock is immutable; use the builder to create new instances.
-- Supports formatting Java code with placeholders.
 """
 
 import re
@@ -247,6 +242,11 @@ class CodeBlock(Code["CodeBlock"]):
             else:
                 self.add(format_string, *args, **kwargs)
                 self.add(";\n")
+            return self
+        
+        def add_line(self, format_string: str, *args, **kwargs) -> "CodeBlock.Builder":
+            self.add(format_string, *args, **kwargs)
+            self.add("\n")
             return self
 
         def begin_statement(self, format_string: str, *args, **kwargs) -> "CodeBlock.Builder":

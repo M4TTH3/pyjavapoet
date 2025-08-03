@@ -137,9 +137,21 @@ class TypeNameTest(unittest.TestCase):
         """Test boxing annotated primitive types."""
         # This would test annotation preservation during boxing
         # For now, just test basic boxing functionality
-        int_type = TypeName.INTEGER
-        boxed = int_type.to_type_param()
-        self.assertEqual(boxed, ClassName.get("java.lang", "Integer"))
+        types = [
+            (TypeName.INTEGER, ClassName.get("java.lang", "Integer")),
+            (TypeName.BOOLEAN, ClassName.get("java.lang", "Boolean")),
+            (TypeName.FLOAT, ClassName.get("java.lang", "Float")),
+            (TypeName.LONG, ClassName.get("java.lang", "Long")),
+            (TypeName.SHORT, ClassName.get("java.lang", "Short")),
+            (TypeName.DOUBLE, ClassName.get("java.lang", "Double")),
+            (TypeName.VOID, ClassName.get("java.lang", "Void")),
+            (TypeName.CHAR, ClassName.get("java.lang", "Character")),
+            (TypeName.BYTE, ClassName.get("java.lang", "Byte")),
+        ]
+        for t, c in types:
+            boxed = t.to_type_param()
+            print(boxed)
+            self.assertEqual(boxed, c)
 
     def test_array_type_creation(self):
         """Test array type creation."""
@@ -177,6 +189,24 @@ class TypeNameTest(unittest.TestCase):
 
         self.assertEqual(str(list_wildcard), "List<? extends Number>")
 
+    def test_parameterized_type_with_primitives(self):
+        types = [
+            (TypeName.INTEGER, ClassName.get("java.lang", "Integer")),
+            (TypeName.BOOLEAN, ClassName.get("java.lang", "Boolean")),
+            (TypeName.FLOAT, ClassName.get("java.lang", "Float")),
+            (TypeName.LONG, ClassName.get("java.lang", "Long")),
+            (TypeName.SHORT, ClassName.get("java.lang", "Short")),
+            (TypeName.DOUBLE, ClassName.get("java.lang", "Double")),
+            (TypeName.VOID, ClassName.get("java.lang", "Void")),
+            (TypeName.CHAR, ClassName.get("java.lang", "Character")),
+            (TypeName.BYTE, ClassName.get("java.lang", "Byte")),
+        ]
+        list_type = ClassName.get("java.util", "List")
+        for t, c in types:
+            new_type = list_type.with_type_arguments(t)
+            self.assertIn(c.simple_name, str(new_type))
+            self.assertNotIn(t.simple_name, str(new_type))
+        
     def test_nested_parameterized_types(self):
         """Test deeply nested parameterized types."""
         map_type = ClassName.get("java.util", "Map").with_type_arguments(
