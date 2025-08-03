@@ -103,6 +103,19 @@ class TypeNameTest(unittest.TestCase):
         self.assertEqual(hash(a), hash(b))
         self.assertNotEqual(a, c)
 
+    def test_get_with_type_or_none(self):
+        """Test get with type or none."""
+        self.assertEqual(TypeName.get(bool), TypeName.BOOLEAN)
+        self.assertEqual(TypeName.get(int), TypeName.INTEGER)
+        self.assertEqual(TypeName.get(float), TypeName.FLOAT)
+        self.assertEqual(TypeName.get(str), TypeName.STRING)
+        self.assertEqual(TypeName.get(list), TypeName.LIST)
+        self.assertEqual(TypeName.get(dict), TypeName.MAP)
+        self.assertEqual(TypeName.get(set), TypeName.SET)
+        self.assertEqual(TypeName.get(tuple), TypeName.LIST)
+        self.assertEqual(TypeName.get(None), TypeName.VOID)
+
+
     def test_is_primitive(self):
         """Test primitive type detection."""
         self.assertTrue(TypeName.get("boolean").is_primitive())
