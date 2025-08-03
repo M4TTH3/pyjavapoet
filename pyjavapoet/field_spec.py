@@ -141,7 +141,7 @@ class FieldSpec(Code["FieldSpec"]):
         def add_javadoc(self, format_string: str, *args) -> "FieldSpec.Builder":
             self.__javadoc = CodeBlock.add_javadoc(self.__javadoc, format_string, *args)
             return self
-        
+
         def add_javadoc_line(self, format_string: str = EMPTY_STRING, *args) -> "FieldSpec.Builder":
             self.__javadoc = CodeBlock.add_javadoc_line(self.__javadoc, format_string, *args)
             return self

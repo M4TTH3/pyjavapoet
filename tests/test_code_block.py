@@ -344,5 +344,6 @@ class CodeBlockTest(unittest.TestCase):
         block = CodeBlock.builder().add_line("System.out.println($S);", "Hello, World!").build()
         self.assertEqual(str(block), 'System.out.println("Hello, World!");\n')
 
+
 if __name__ == "__main__":
     unittest.main()

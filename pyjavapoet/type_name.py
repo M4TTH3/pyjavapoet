@@ -204,7 +204,7 @@ class TypeName(ABC):
                 list: TypeName.LIST,
                 dict: TypeName.MAP,
                 set: TypeName.SET,
-                tuple: TypeName.LIST
+                tuple: TypeName.LIST,
             }
 
             if type_mirror_or_name in type_mapping:
