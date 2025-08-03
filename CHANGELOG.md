@@ -38,6 +38,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Annotation formatting with correct newline placement
 - Primitive type boxing to proper wrapper classes (e.g., int -> java.lang.Integer)
 
+## [0.1.2] - 2025-08-03
+
+### Added
+- Enhanced TypeName support for common Java library types (List, Map, Set, etc.)
+- Better Python type mapping (bool -> boolean, int -> int, etc.)
+- Added `add_javadoc` method alongside existing `add_javadoc_line`
+- Added `add_raw_line` method for raw code with newlines
+- Support for handling None values in TypeName.get()
+
+### Changed
+- Improved TypeName.get() to handle Python types directly (e.g., `TypeName.get(bool)` returns `TypeName.BOOLEAN`)
+- Updated method API: `add_code()` renamed to `add_raw_code()` for clarity
+- Enhanced JavaDoc generation with better newline handling
+- Applied consistent code formatting across the entire codebase using ruff
+
+### Fixed
+- TypeName.get() now properly handles Python type objects instead of just type names
+- JavaDoc emission now properly handles newlines and prefixes
+- Annotation formatting with correct newline placement
+- Primitive type boxing to proper wrapper classes (e.g., int -> java.lang.Integer)
+
+## [0.1.1] - 2025-07-29
+
+### Added Features
+- Added begin_statement_chain, add_chained_item, and end_statement_chain to MethodSpec builder
+- Includes corresponding changes in CodeBlock
+- Switched add_javadoc to add_javadoc_line
+- Added more default types to TypeName
+
+### Fixes
+- Fixed annotation newline issue
+- Fixed passing in python types to give you a TypeName
+
 ## [0.1.0] - 2025-07-29
 
 Initial port of JavaPoet from Java to Python, maintaining the fluent builder pattern and core functionality while adapting for Python conventions.
@@ -137,15 +170,3 @@ and the following files were added:
 - Code quality tools integration (ruff formatting)
 - Type hints and Python best practices
 
-
-## [0.1.1] - 2025-07-29
-
-### Added Features
-- Added begin_statement_chain, add_chained_item, and end_statement_chain to MethodSpec builder
-- Includes corresponding changes in CodeBlock
-- Switched add_javadoc to add_javadoc_line
-- Added more default types to TypeName
-
-### Fixes
-- Fixed annotation newline issue
-- Fixed passing in python types to give you a TypeName
