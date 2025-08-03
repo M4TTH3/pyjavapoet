@@ -325,11 +325,24 @@ class CodeBlockTest(unittest.TestCase):
     def test_add_javadoc(self):
         """Test adding JavaDoc to a code block."""
         block = CodeBlock.of("$L", "Hello, World!")
-        block = CodeBlock.add_javadoc(block, "Hello, World!")
+        block = CodeBlock.add_javadoc(block, " Hello, World!\n\n")
         writer = CodeWriter()
         block.emit_javadoc(writer)
-        self.assertEqual(str(writer), "/**\n * Hello, World!\n * Hello, World!\n */")
+        print(str(writer))
+        self.assertEqual(str(writer), "/**\n * Hello, World! Hello, World!\n * \n * \n */")
 
+    def test_add_javadoc_with_line_breaks(self):
+        """Test adding JavaDoc with line breaks."""
+        block = CodeBlock.add_javadoc_line(None, "One!\n")
+        block = CodeBlock.add_javadoc_line(block, "Two!\nThree!\nFour!")
+        writer = CodeWriter()
+        block.emit_javadoc(writer)
+        self.assertEqual(str(writer), "/**\n * One!\n * \n * Two!\n * Three!\n * Four!\n */")
+
+    def test_add_raw_line(self):
+        """Test adding raw code to a code block."""
+        block = CodeBlock.builder().add_line("System.out.println($S);", "Hello, World!").build()
+        self.assertEqual(str(block), 'System.out.println("Hello, World!");\n')
 
 if __name__ == "__main__":
     unittest.main()

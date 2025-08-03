@@ -977,8 +977,8 @@ print(str(java_file))
 
 # Java file with imports and file comment
 java_file_with_imports = JavaFile.builder("com.example", simple_class) \
-    .add_file_comment("This is a generated file.") \
-    .add_file_comment("Do not edit manually.") \
+    .add_file_comment_line("This is a generated file.") \
+    .add_file_comment_line("Do not edit manually.") \
     .add_static_import(ClassName.get("java.lang", "System"), "out") \
     .build()
 print(str(java_file_with_imports))
@@ -1026,6 +1026,7 @@ method = MethodSpec.method_builder("example") \
 ```
 
 ## TODOs
+I think of these as nice-ities, but they are more about convenience rather than correctness. There are work-arounds/other tools that can be used to create these desired affects.
 
 1. TreeSitter API to synactically validate java file
 2. Add kwargs to method spec builder. Currently code block will have an issue of overwriting previous
@@ -1035,8 +1036,7 @@ method = MethodSpec.method_builder("example") \
 5. Name Allocator if we so desire (?)
 6. Annotation member has to be valid java identifier
 7. Handle primitive types better in ClassName i.e. validation
-8. Improve tests with exact output strings and also slim down unneeded tests
-9.  Pass in TypeSpec for Types as well (for nested classes) ? It might work and we can include a self key too
+8. Pass in TypeSpec for Types as well (for nested classes) ? It might work and we can include a self key too
 
 ## License
 

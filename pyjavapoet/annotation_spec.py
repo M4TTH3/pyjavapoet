@@ -15,13 +15,6 @@ limitations under the License.
 
 Modified by Matthew Au-Yeung on 2025-07-29; see changelog.md for more details.
 - Similar APIs ported from Java to Python.
-
-Changes and Current API:
-- The API is modeled after JavaPoet's AnnotationSpec, but adapted for Python.
-- AnnotationSpec is immutable; use the builder to create new instances.
-- Supports representing Java annotations for classes, methods, fields, parameters, etc.
-- The main API:
-    - AnnotationSpec(type_name, members)
 """
 
 from typing import Any, Union

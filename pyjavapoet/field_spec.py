@@ -15,12 +15,6 @@ limitations under the License.
 
 Modified by Matthew Au-Yeung on 2025-07-29; see changelog.md for more details.
 - Similar APIs ported from Java to Python.
-
-Changes and Current API:
-- The API is modeled after JavaPoet's FieldSpec, but adapted for Python.
-- FieldSpec is immutable; use the builder to create new instances.
-- Supports Java modifiers (from Modifier), annotations (AnnotationSpec), type information (TypeName),
-  and initializer (CodeBlock).
 """
 
 from typing import TYPE_CHECKING, Optional, Union
@@ -28,10 +22,10 @@ from typing import TYPE_CHECKING, Optional, Union
 from pyjavapoet.annotation_spec import AnnotationSpec
 from pyjavapoet.code_base import Code
 from pyjavapoet.code_block import CodeBlock
-from pyjavapoet.code_writer import CodeWriter
+from pyjavapoet.code_writer import EMPTY_STRING, CodeWriter
 from pyjavapoet.modifier import Modifier
 from pyjavapoet.type_name import TypeName
-from pyjavapoet.util import deep_copy
+from pyjavapoet.util import deep_copy, throw_if_invalid_java_identifier
 
 if TYPE_CHECKING:
     from pyjavapoet.code_writer import CodeWriter
@@ -99,68 +93,8 @@ class FieldSpec(Code["FieldSpec"]):
         )
 
     @staticmethod
-    def is_valid_field_name(name: str) -> bool:
-        java_keywords = {
-            "abstract",
-            "assert",
-            "boolean",
-            "break",
-            "byte",
-            "case",
-            "catch",
-            "char",
-            "class",
-            "const",
-            "continue",
-            "default",
-            "do",
-            "double",
-            "else",
-            "enum",
-            "extends",
-            "final",
-            "finally",
-            "float",
-            "for",
-            "goto",
-            "if",
-            "implements",
-            "import",
-            "instanceof",
-            "int",
-            "interface",
-            "long",
-            "native",
-            "new",
-            "package",
-            "private",
-            "protected",
-            "public",
-            "return",
-            "short",
-            "static",
-            "strictfp",
-            "super",
-            "switch",
-            "synchronized",
-            "this",
-            "throw",
-            "throws",
-            "transient",
-            "try",
-            "void",
-            "volatile",
-            "while",
-            "true",
-            "false",
-            "null",
-        }
-        return name.isidentifier() and name not in java_keywords
-
-    @staticmethod
     def builder(type_name: Union["TypeName", str, type], name: str) -> "Builder":
-        if not FieldSpec.is_valid_field_name(name):
-            raise ValueError(f"Invalid field name: {name}")
+        throw_if_invalid_java_identifier(name)
 
         if not isinstance(type_name, TypeName):
             type_name = TypeName.get(type_name)
@@ -206,6 +140,10 @@ class FieldSpec(Code["FieldSpec"]):
 
         def add_javadoc(self, format_string: str, *args) -> "FieldSpec.Builder":
             self.__javadoc = CodeBlock.add_javadoc(self.__javadoc, format_string, *args)
+            return self
+        
+        def add_javadoc_line(self, format_string: str = EMPTY_STRING, *args) -> "FieldSpec.Builder":
+            self.__javadoc = CodeBlock.add_javadoc_line(self.__javadoc, format_string, *args)
             return self
 
         def initializer(self, format_string: str | CodeBlock, *args) -> "FieldSpec.Builder":

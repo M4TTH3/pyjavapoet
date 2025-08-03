@@ -55,6 +55,24 @@ class CodeWriterTest(unittest.TestCase):
         expected = "start\n  indented\n    double indented\n  single indented\nend\n"
         self.assertEqual(result, expected)
 
+    def test_emit_with_nested_newlines_handling(self):
+        """Test that if double newline and there's a new_line_prefix, we add it."""
+        writer = CodeWriter()
+        # Emit a line, then a double newline with a prefix, then another line
+        writer.emit("line1\n", new_line_prefix="// ")
+        writer.emit("\n\nline2\n", new_line_prefix="// ")
+        writer.emit("line3", new_line_prefix="// ")
+
+        result = str(writer)
+        # The expected result:
+        # // line1
+        # // 
+        # // 
+        # // line2
+        # // line3
+        expected = "// line1\n// \n// \n// line2\n// line3"
+        self.assertEqual(result, expected)
+
     def test_custom_indent_string(self):
         """Test custom indentation string."""
         writer = CodeWriter(indent="\t")

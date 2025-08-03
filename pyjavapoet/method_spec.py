@@ -15,19 +15,6 @@ limitations under the License.
 
 Modified by Matthew Au-Yeung on 2025-07-29; see changelog.md for more details.
 - Similar APIs ported from Java to Python.
-
-Changes and Current API:
-- The API is modeled after JavaPoet's MethodSpec, but adapted for Python.
-- MethodSpec is immutable; use the builder pattern to create instances.
-- Supports Java modifiers (from Modifier), annotations (AnnotationSpec), type variables, parameters (ParameterSpec),
-  exceptions, return type (TypeName), and method/constructor body (CodeBlock).
-- The main API:
-    - MethodSpec(name, modifiers, parameters, return_type, exceptions, type_variables, javadoc, annotations,
-      code, default_value, kind)
-    - .emit(code_writer): emits the method or constructor as Java code.
-    - .to_builder(): returns a builder initialized with this method's values.
-    - MethodSpec.builder(name): static method to start building a method.
-- Utility functions and validation are used to ensure correctness.
 """
 
 from enum import Enum, auto
@@ -277,21 +264,33 @@ class MethodSpec(Code["MethodSpec"]):
         def add_type_variable(self, type_variable: "TypeVariableName") -> "MethodSpec.Builder":
             self.__type_variables.append(type_variable)
             return self
+        
+        def add_javadoc(self, format_string: str, *args) -> "MethodSpec.Builder":
+            self.__javadoc = CodeBlock.add_javadoc(self.__javadoc, format_string, *args)
+            return self
 
         def add_javadoc_line(self, format_string: str = EMPTY_STRING, *args) -> "MethodSpec.Builder":
-            self.__javadoc = CodeBlock.add_javadoc(self.__javadoc, format_string, *args)
+            self.__javadoc = CodeBlock.add_javadoc_line(self.__javadoc, format_string, *args)
             return self
 
         def add_annotation(self, annotation_spec: "AnnotationSpec") -> "MethodSpec.Builder":
             self.__annotations.append(annotation_spec)
             return self
 
-        def add_code(self, format_string: str, *args) -> "MethodSpec.Builder":
+        def add_raw_code(self, format_string: str, *args) -> "MethodSpec.Builder":
             if self.__kind == MethodSpec.Kind.COMPACT_CONSTRUCTOR:
                 raise ValueError("Compact constructors cannot have a body")
 
             if self.__code_builder is not None:
                 self.__code_builder.add(format_string, *args)
+            return self
+
+        def add_raw_line(self, format_string: str, *args) -> "MethodSpec.Builder":
+            if self.__kind == MethodSpec.Kind.COMPACT_CONSTRUCTOR:
+                raise ValueError("Compact constructors cannot have a body")
+
+            if self.__code_builder is not None:
+                self.__code_builder.add_line(format_string, *args)
             return self
 
         def add_statement(self, format_string: str, *args) -> "MethodSpec.Builder":

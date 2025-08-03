@@ -15,19 +15,6 @@ limitations under the License.
 
 Modified by Matthew Au-Yeung on 2025-07-29; see changelog.md for more details.
 - Similar APIs ported from Java to Python.
-
-This module defines the ParameterSpec class, which represents a parameter for a Java method or constructor.
-
-Changes and Current API:
-- The API is modeled after JavaPoet's ParameterSpec, but adapted for Python.
-- ParameterSpec is immutable; use the builder pattern to create instances.
-- Supports Java modifiers (from Modifier), annotations (AnnotationSpec), varargs, and type information (TypeName).
-- The main API:
-    - ParameterSpec(type_name, name, modifiers, annotations, varargs=False)
-    - .emit(code_writer): emits the parameter as Java code.
-    - .to_builder(): returns a builder initialized with this parameter's values.
-    - ParameterSpec.builder(type_name, name): static method to start building a parameter.
-- Utility functions and validation (e.g., throw_if_invalid_java_identifier) are used to ensure correctness.
 """
 
 import re

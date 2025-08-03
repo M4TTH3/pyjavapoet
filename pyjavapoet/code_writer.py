@@ -15,11 +15,6 @@ limitations under the License.
 
 Modified by Matthew Au-Yeung on 2025-07-29; see changelog.md for more details.
 - Similar APIs ported from Java to Python.
-
-Changes and Current API:
-- The API is modeled after JavaPoet's CodeWriter, but adapted for Python.
-- CodeWriter is immutable; use the builder to create new instances.
-- Supports emitting Java code with proper formatting.
 """
 
 from typing import Annotated, Literal
@@ -80,6 +75,10 @@ class CodeWriter:
 
     def emit(self, s: str | Constant, new_line_prefix: str = "") -> "CodeWriter":
         if s.startswith("\n"):
+            if self.__line_start and new_line_prefix:
+                self.__out.append(self.__indent * self.__indent_level)
+                self.__out.append(new_line_prefix)
+
             # Reset line start
             self.__out.append("\n")
             self.__line_start = True

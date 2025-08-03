@@ -15,15 +15,6 @@ limitations under the License.
 
 Modified by Matthew Au-Yeung on 2025-07-29; see changelog.md for more details.
 - Similar APIs ported from Java to Python.
-
-TypeSpec for representing Java classes, interfaces, enums, and annotations.
-
-This module defines the TypeSpec class, which is used to represent Java types:
-- Classes
-- Interfaces
-- Enums
-- Annotations
-- Records
 """
 
 from enum import Enum, auto
@@ -155,6 +146,7 @@ class TypeSpec(Code["TypeSpec"]):
         # Emit Javadoc
         if self.javadoc:
             self.javadoc.emit_javadoc(code_writer)
+            code_writer.emit("\n")
 
         # Emit annotations
         for annotation in self.annotations:
@@ -446,9 +438,13 @@ class TypeSpec(Code["TypeSpec"]):
 
             self.__permitted_subclasses.append(subclass)
             return self
+        
+        def add_javadoc(self, format_string: str, *args) -> "TypeSpec.Builder":
+            self.__javadoc = CodeBlock.add_javadoc(self.__javadoc, format_string, *args)
+            return self
 
         def add_javadoc_line(self, format_string: str = EMPTY_STRING, *args) -> "TypeSpec.Builder":
-            self.__javadoc = CodeBlock.add_javadoc(self.__javadoc, format_string, *args)
+            self.__javadoc = CodeBlock.add_javadoc_line(self.__javadoc, format_string, *args)
             return self
 
         def add_annotation(self, annotation_spec: AnnotationSpec) -> "TypeSpec.Builder":
