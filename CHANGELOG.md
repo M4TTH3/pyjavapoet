@@ -17,10 +17,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Complex control flow structures
   - Records (Java 14+)
   - File I/O operations
+- Enhanced TypeName support for common Java library types (List, Map, Set, etc.)
+- Better Python type mapping (bool -> boolean, int -> int, etc.)
+- Added `add_javadoc` method alongside existing `add_javadoc_line`
+- Added `add_raw_line` method for raw code with newlines
+- Support for handling None values in TypeName.get()
 
 ### Changed
 - Updated README structure with clear Python-to-Java code mappings
 - Enhanced documentation with working examples
+- Improved TypeName.get() to handle Python types directly (e.g., `TypeName.get(bool)` returns `TypeName.BOOLEAN`)
+- Updated method API: `add_code()` renamed to `add_raw_code()` for clarity
+- Enhanced JavaDoc generation with better newline handling
+- Fixed annotation newline formatting issues
+- Improved static class name handling
+
+### Fixed
+- TypeName.get() now properly handles Python type objects instead of just type names
+- JavaDoc emission now properly handles newlines and prefixes
+- Annotation formatting with correct newline placement
+- Primitive type boxing to proper wrapper classes (e.g., int -> java.lang.Integer)
 
 ## [0.1.0] - 2025-07-29
 
@@ -128,3 +144,8 @@ and the following files were added:
 - Added begin_statement_chain, add_chained_item, and end_statement_chain to MethodSpec builder
 - Includes corresponding changes in CodeBlock
 - Switched add_javadoc to add_javadoc_line
+- Added more default types to TypeName
+
+### Fixes
+- Fixed annotation newline issue
+- Fixed passing in python types to give you a TypeName
