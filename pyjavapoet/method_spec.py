@@ -264,9 +264,13 @@ class MethodSpec(Code["MethodSpec"]):
         def add_type_variable(self, type_variable: "TypeVariableName") -> "MethodSpec.Builder":
             self.__type_variables.append(type_variable)
             return self
+        
+        def add_javadoc(self, format_string: str, *args) -> "MethodSpec.Builder":
+            self.__javadoc = CodeBlock.add_javadoc(self.__javadoc, format_string, *args)
+            return self
 
         def add_javadoc_line(self, format_string: str = EMPTY_STRING, *args) -> "MethodSpec.Builder":
-            self.__javadoc = CodeBlock.add_javadoc(self.__javadoc, format_string, *args)
+            self.__javadoc = CodeBlock.add_javadoc_line(self.__javadoc, format_string, *args)
             return self
 
         def add_annotation(self, annotation_spec: "AnnotationSpec") -> "MethodSpec.Builder":

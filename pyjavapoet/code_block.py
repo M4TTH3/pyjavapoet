@@ -46,7 +46,7 @@ class CodeBlock(Code["CodeBlock"]):
     placeholder_match = re.compile(
         r"""
         \$(
-            (?P<type1>[LSTN<>])                                 # $L, $S, $T, $N, $<, $>
+            (?P<type1>[LSTN<>])                       # $L, $S, $T, $N, $<, $>
             |                                         # or
             (?P<name>[a-zA-Z_][a-zA-Z0-9_]*)          # $name
             :                                         # :
@@ -54,6 +54,26 @@ class CodeBlock(Code["CodeBlock"]):
             |                                         # or
             (?P<index>\d+)                            # $1, $2, etc.
             (?P<type3>[LSTN<>])                     # L, S, T, N, $<, $>
+        )
+        """,
+        re.VERBOSE,
+    )
+
+    placeholder_match_with_newlines = re.compile(
+        r"""
+        (
+            \$(
+                (?P<type1>[LSTN<>])                       # $L, $S, $T, $N, $<, $>
+                |                                         # or
+                (?P<name>[a-zA-Z_][a-zA-Z0-9_]*)          # $name
+                :                                         # :
+                (?P<type2>[LSTN])                         # T, L, S, N
+                |                                         # or
+                (?P<index>\d+)                            # $1, $2, etc.
+                (?P<type3>[LSTN<>])                       # L, S, T, N, $<, $>
+            )
+            |
+            (\n)                                          # or a literal newline
         )
         """,
         re.VERBOSE,
@@ -135,9 +155,10 @@ class CodeBlock(Code["CodeBlock"]):
                 code_writer.emit(part, new_line_prefix)
 
     def emit_javadoc(self, code_writer: "CodeWriter") -> None:
-        code_writer.emit("/**\n * ")
+        code_writer.emit("/**\n")
         self.emit(code_writer, " * ")
-        code_writer.emit("\n */")
+        code_writer.emit("\n", " * ")
+        code_writer.emit(" */")
 
     def javadoc(self) -> str:
         writer = CodeWriter()
@@ -174,6 +195,13 @@ class CodeBlock(Code["CodeBlock"]):
     @staticmethod
     def add_javadoc(javadoc: Optional["CodeBlock"], format_string: str, *args) -> "CodeBlock":
         if javadoc:
+            return CodeBlock.join_to_code([javadoc, CodeBlock.of(format_string, *args)])
+        else:
+            return CodeBlock.of(format_string, *args)
+        
+    @staticmethod
+    def add_javadoc_line(javadoc: Optional["CodeBlock"], format_string: str, *args) -> "CodeBlock":
+        if javadoc:
             return CodeBlock.join_to_code([javadoc, CodeBlock.of(format_string, *args)], "\n")
         else:
             return CodeBlock.of(format_string, *args)
@@ -202,7 +230,7 @@ class CodeBlock(Code["CodeBlock"]):
 
         def add(self, format_string: str, *args, **kwargs) -> "CodeBlock.Builder":
             # Check for arguments in the format string
-            matches = list(re.finditer(CodeBlock.placeholder_match, format_string))
+            matches = list(re.finditer(CodeBlock.placeholder_match_with_newlines, format_string))
 
             # Simple case: no arguments
             if not matches:

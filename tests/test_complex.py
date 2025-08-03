@@ -107,7 +107,7 @@ class ComplexTest(unittest.TestCase):
         # Create the Java file
         java_file = (
             JavaFile.builder("com.example.processor", processor)
-            .add_file_comment("This is a generated file. Do not edit!")
+            .add_file_comment_line("This is a generated file. Do not edit!")
             .build()
         )
 

@@ -82,8 +82,8 @@ class FieldSpecTest(unittest.TestCase):
         """Test field with javadoc."""
         field = (
             FieldSpec.builder(ClassName.get("java.lang", "String"), "name")
-            .add_javadoc("@deprecated Use something else")
-            .add_javadoc("Use something else")
+            .add_javadoc_line("@deprecated Use something else")
+            .add_javadoc_line("Use something else")
             .build()
         )
 
