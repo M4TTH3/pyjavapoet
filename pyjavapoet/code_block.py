@@ -198,7 +198,7 @@ class CodeBlock(Code["CodeBlock"]):
             return CodeBlock.join_to_code([javadoc, CodeBlock.of(format_string, *args)])
         else:
             return CodeBlock.of(format_string, *args)
-        
+
     @staticmethod
     def add_javadoc_line(javadoc: Optional["CodeBlock"], format_string: str, *args) -> "CodeBlock":
         if javadoc:
@@ -271,7 +271,7 @@ class CodeBlock(Code["CodeBlock"]):
                 self.add(format_string, *args, **kwargs)
                 self.add(";\n")
             return self
-        
+
         def add_line(self, format_string: str, *args, **kwargs) -> "CodeBlock.Builder":
             self.add(format_string, *args, **kwargs)
             self.add("\n")

@@ -115,7 +115,6 @@ class TypeNameTest(unittest.TestCase):
         self.assertEqual(TypeName.get(tuple), TypeName.LIST)
         self.assertEqual(TypeName.get(None), TypeName.VOID)
 
-
     def test_is_primitive(self):
         """Test primitive type detection."""
         self.assertTrue(TypeName.get("boolean").is_primitive())
@@ -219,7 +218,7 @@ class TypeNameTest(unittest.TestCase):
             new_type = list_type.with_type_arguments(t)
             self.assertIn(c.simple_name, str(new_type))
             self.assertNotIn(t.simple_name, str(new_type))
-        
+
     def test_nested_parameterized_types(self):
         """Test deeply nested parameterized types."""
         map_type = ClassName.get("java.util", "Map").with_type_arguments(

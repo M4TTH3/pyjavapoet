@@ -66,8 +66,8 @@ class CodeWriterTest(unittest.TestCase):
         result = str(writer)
         # The expected result:
         # // line1
-        # // 
-        # // 
+        # //
+        # //
         # // line2
         # // line3
         expected = "// line1\n// \n// \n// line2\n// line3"

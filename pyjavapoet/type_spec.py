@@ -438,7 +438,7 @@ class TypeSpec(Code["TypeSpec"]):
 
             self.__permitted_subclasses.append(subclass)
             return self
-        
+
         def add_javadoc(self, format_string: str, *args) -> "TypeSpec.Builder":
             self.__javadoc = CodeBlock.add_javadoc(self.__javadoc, format_string, *args)
             return self

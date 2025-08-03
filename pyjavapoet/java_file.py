@@ -184,7 +184,7 @@ class JavaFile(Code["JavaFile"]):
         def add_file_comment(self, format_string: str = EMPTY_STRING, *args) -> "JavaFile.Builder":
             self.__file_comment = CodeBlock.add_javadoc(self.__file_comment, format_string, *args)
             return self
-        
+
         def add_file_comment_line(self, format_string: str = EMPTY_STRING, *args) -> "JavaFile.Builder":
             self.__file_comment = CodeBlock.add_javadoc_line(self.__file_comment, format_string, *args)
             return self
