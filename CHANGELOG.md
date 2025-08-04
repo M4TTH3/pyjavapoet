@@ -8,35 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Comprehensive README with usage examples and generated Java code samples
-- Installation instructions for pip and source installation
-- Examples covering all major features:
-  - Basic class, interface, and enum creation
-  - Generic types and type variables
-  - Annotations and Javadoc
-  - Complex control flow structures
-  - Records (Java 14+)
-  - File I/O operations
-- Enhanced TypeName support for common Java library types (List, Map, Set, etc.)
-- Better Python type mapping (bool -> boolean, int -> int, etc.)
-- Added `add_javadoc` method alongside existing `add_javadoc_line`
-- Added `add_raw_line` method for raw code with newlines
-- Support for handling None values in TypeName.get()
+- N/A
 
 ### Changed
-- Updated README structure with clear Python-to-Java code mappings
-- Enhanced documentation with working examples
-- Improved TypeName.get() to handle Python types directly (e.g., `TypeName.get(bool)` returns `TypeName.BOOLEAN`)
-- Updated method API: `add_code()` renamed to `add_raw_code()` for clarity
-- Enhanced JavaDoc generation with better newline handling
-- Fixed annotation newline formatting issues
-- Improved static class name handling
+- N/A
 
 ### Fixed
-- TypeName.get() now properly handles Python type objects instead of just type names
-- JavaDoc emission now properly handles newlines and prefixes
-- Annotation formatting with correct newline placement
-- Primitive type boxing to proper wrapper classes (e.g., int -> java.lang.Integer)
+- N/A
+
+## [0.1.3] - 2025-08-04
+- Moved all common ClassNames to be under ClassName instead of TypeName
 
 ## [0.1.2] - 2025-08-03
 

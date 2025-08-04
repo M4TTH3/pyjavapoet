@@ -105,15 +105,15 @@ class TypeNameTest(unittest.TestCase):
 
     def test_get_with_type_or_none(self):
         """Test get with type or none."""
-        self.assertEqual(TypeName.get(bool), TypeName.BOOLEAN)
-        self.assertEqual(TypeName.get(int), TypeName.INTEGER)
-        self.assertEqual(TypeName.get(float), TypeName.FLOAT)
-        self.assertEqual(TypeName.get(str), TypeName.STRING)
-        self.assertEqual(TypeName.get(list), TypeName.LIST)
-        self.assertEqual(TypeName.get(dict), TypeName.MAP)
-        self.assertEqual(TypeName.get(set), TypeName.SET)
-        self.assertEqual(TypeName.get(tuple), TypeName.LIST)
-        self.assertEqual(TypeName.get(None), TypeName.VOID)
+        self.assertEqual(TypeName.get(bool), ClassName.BOOLEAN)
+        self.assertEqual(TypeName.get(int), ClassName.INTEGER)
+        self.assertEqual(TypeName.get(float), ClassName.FLOAT)
+        self.assertEqual(TypeName.get(str), ClassName.STRING)
+        self.assertEqual(TypeName.get(list), ClassName.LIST)
+        self.assertEqual(TypeName.get(dict), ClassName.MAP)
+        self.assertEqual(TypeName.get(set), ClassName.SET)
+        self.assertEqual(TypeName.get(tuple), ClassName.LIST)
+        self.assertEqual(TypeName.get(None), ClassName.VOID)
 
     def test_is_primitive(self):
         """Test primitive type detection."""
@@ -150,15 +150,15 @@ class TypeNameTest(unittest.TestCase):
         # This would test annotation preservation during boxing
         # For now, just test basic boxing functionality
         types = [
-            (TypeName.INTEGER, ClassName.get("java.lang", "Integer")),
-            (TypeName.BOOLEAN, ClassName.get("java.lang", "Boolean")),
-            (TypeName.FLOAT, ClassName.get("java.lang", "Float")),
-            (TypeName.LONG, ClassName.get("java.lang", "Long")),
-            (TypeName.SHORT, ClassName.get("java.lang", "Short")),
-            (TypeName.DOUBLE, ClassName.get("java.lang", "Double")),
-            (TypeName.VOID, ClassName.get("java.lang", "Void")),
-            (TypeName.CHAR, ClassName.get("java.lang", "Character")),
-            (TypeName.BYTE, ClassName.get("java.lang", "Byte")),
+            (ClassName.INTEGER, ClassName.get("java.lang", "Integer")),
+            (ClassName.BOOLEAN, ClassName.get("java.lang", "Boolean")),
+            (ClassName.FLOAT, ClassName.get("java.lang", "Float")),
+            (ClassName.LONG, ClassName.get("java.lang", "Long")),
+            (ClassName.SHORT, ClassName.get("java.lang", "Short")),
+            (ClassName.DOUBLE, ClassName.get("java.lang", "Double")),
+            (ClassName.VOID, ClassName.get("java.lang", "Void")),
+            (ClassName.CHAR, ClassName.get("java.lang", "Character")),
+            (ClassName.BYTE, ClassName.get("java.lang", "Byte")),
         ]
         for t, c in types:
             boxed = t.to_type_param()
@@ -203,15 +203,15 @@ class TypeNameTest(unittest.TestCase):
 
     def test_parameterized_type_with_primitives(self):
         types = [
-            (TypeName.INTEGER, ClassName.get("java.lang", "Integer")),
-            (TypeName.BOOLEAN, ClassName.get("java.lang", "Boolean")),
-            (TypeName.FLOAT, ClassName.get("java.lang", "Float")),
-            (TypeName.LONG, ClassName.get("java.lang", "Long")),
-            (TypeName.SHORT, ClassName.get("java.lang", "Short")),
-            (TypeName.DOUBLE, ClassName.get("java.lang", "Double")),
-            (TypeName.VOID, ClassName.get("java.lang", "Void")),
-            (TypeName.CHAR, ClassName.get("java.lang", "Character")),
-            (TypeName.BYTE, ClassName.get("java.lang", "Byte")),
+            (ClassName.INTEGER, ClassName.get("java.lang", "Integer")),
+            (ClassName.BOOLEAN, ClassName.get("java.lang", "Boolean")),
+            (ClassName.FLOAT, ClassName.get("java.lang", "Float")),
+            (ClassName.LONG, ClassName.get("java.lang", "Long")),
+            (ClassName.SHORT, ClassName.get("java.lang", "Short")),
+            (ClassName.DOUBLE, ClassName.get("java.lang", "Double")),
+            (ClassName.VOID, ClassName.get("java.lang", "Void")),
+            (ClassName.CHAR, ClassName.get("java.lang", "Character")),
+            (ClassName.BYTE, ClassName.get("java.lang", "Byte")),
         ]
         list_type = ClassName.get("java.util", "List")
         for t, c in types:
