@@ -345,7 +345,6 @@ class TypeSpec(Code["TypeSpec"]):
 
     @staticmethod
     def anonymous_class_builder(format_string: str = "", *args) -> "AnonymousClassBuilder":
-
         builder = TypeSpec.AnonymousClassBuilder(ClassName.OBJECT)
         if format_string:
             builder.add_super_class_constructor_argument(format_string, *args)
