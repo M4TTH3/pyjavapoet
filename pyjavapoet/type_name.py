@@ -34,58 +34,6 @@ class TypeName(ABC):
     Base class for types in Java's type system.
     """
 
-    INTEGER: "ClassName"
-    LONG: "ClassName"
-    DOUBLE: "ClassName"
-    FLOAT: "ClassName"
-    SHORT: "ClassName"
-    BYTE: "ClassName"
-    CHAR: "ClassName"
-    BOOLEAN: "ClassName"
-    VOID: "ClassName"
-    OBJECT: "ClassName"
-    STRING: "ClassName"
-    VOID: "ClassName"
-    LIST: "ClassName"
-    MAP: "ClassName"
-    SET: "ClassName"
-
-    # Commonly used Java library types
-    LIST: "ClassName"
-    MAP: "ClassName"
-    SET: "ClassName"
-    COLLECTION: "ClassName"
-    ITERABLE: "ClassName"
-    ITERATOR: "ClassName"
-    OPTIONAL: "ClassName"
-    STREAM: "ClassName"
-    ARRAY_LIST: "ClassName"
-    LINKED_LIST: "ClassName"
-    HASH_MAP: "ClassName"
-    LINKED_HASH_MAP: "ClassName"
-    TREE_MAP: "ClassName"
-    HASH_SET: "ClassName"
-    LINKED_HASH_SET: "ClassName"
-    TREE_SET: "ClassName"
-    QUEUE: "ClassName"
-    DEQUE: "ClassName"
-    STACK: "ClassName"
-    VECTOR: "ClassName"
-    ENUM_SET: "ClassName"
-    ENUM_MAP: "ClassName"
-    BIG_DECIMAL: "ClassName"
-    BIG_INTEGER: "ClassName"
-    DATE: "ClassName"
-    CALENDAR: "ClassName"
-    LOCALE: "ClassName"
-    FILE: "ClassName"
-    PATH: "ClassName"
-    URL: "ClassName"
-    UUID: "ClassName"
-    OBJECTS: "ClassName"
-    STRING_BUILDER: "ClassName"
-    STRING_BUFFER: "ClassName"
-
     # Primitive types mapping
     PRIMITIVE_TYPES = {
         "boolean": "Boolean",
@@ -179,7 +127,7 @@ class TypeName(ABC):
     @staticmethod
     def get(type_mirror_or_name: Union[str, type, "TypeName", None]) -> "TypeName":
         if not type_mirror_or_name:
-            return TypeName.VOID
+            return ClassName.VOID
 
         if isinstance(type_mirror_or_name, TypeName):
             return type_mirror_or_name
@@ -197,24 +145,76 @@ class TypeName(ABC):
         if isinstance(type_mirror_or_name, type):
             # Map Python types to Java types
             type_mapping = {
-                bool: TypeName.BOOLEAN,
-                int: TypeName.INTEGER,
-                float: TypeName.FLOAT,
-                str: TypeName.STRING,
-                list: TypeName.LIST,
-                dict: TypeName.MAP,
-                set: TypeName.SET,
-                tuple: TypeName.LIST,
+                bool: ClassName.BOOLEAN,
+                int: ClassName.INTEGER,
+                float: ClassName.FLOAT,
+                str: ClassName.STRING,
+                list: ClassName.LIST,
+                dict: ClassName.MAP,
+                set: ClassName.SET,
+                tuple: ClassName.LIST,
             }
 
             if type_mirror_or_name in type_mapping:
                 return TypeName.get(type_mapping[type_mirror_or_name])
             else:
                 # Default to Java Object for other Python types
-                return TypeName.OBJECT
+                return ClassName.OBJECT
 
 
 class ClassName(TypeName):
+    INTEGER: "ClassName"
+    LONG: "ClassName"
+    DOUBLE: "ClassName"
+    FLOAT: "ClassName"
+    SHORT: "ClassName"
+    BYTE: "ClassName"
+    CHAR: "ClassName"
+    BOOLEAN: "ClassName"
+    VOID: "ClassName"
+    OBJECT: "ClassName"
+    STRING: "ClassName"
+    VOID: "ClassName"
+    LIST: "ClassName"
+    MAP: "ClassName"
+    SET: "ClassName"
+
+    # Commonly used Java library types
+    LIST: "ClassName"
+    MAP: "ClassName"
+    SET: "ClassName"
+    COLLECTION: "ClassName"
+    ITERABLE: "ClassName"
+    ITERATOR: "ClassName"
+    OPTIONAL: "ClassName"
+    STREAM: "ClassName"
+    ARRAY_LIST: "ClassName"
+    LINKED_LIST: "ClassName"
+    HASH_MAP: "ClassName"
+    LINKED_HASH_MAP: "ClassName"
+    TREE_MAP: "ClassName"
+    HASH_SET: "ClassName"
+    LINKED_HASH_SET: "ClassName"
+    TREE_SET: "ClassName"
+    QUEUE: "ClassName"
+    DEQUE: "ClassName"
+    STACK: "ClassName"
+    VECTOR: "ClassName"
+    ENUM_SET: "ClassName"
+    ENUM_MAP: "ClassName"
+    BIG_DECIMAL: "ClassName"
+    BIG_INTEGER: "ClassName"
+    DATE: "ClassName"
+    CALENDAR: "ClassName"
+    LOCALE: "ClassName"
+    FILE: "ClassName"
+    PATH: "ClassName"
+    URL: "ClassName"
+    UUID: "ClassName"
+    OBJECTS: "ClassName"
+    STRING_BUILDER: "ClassName"
+    STRING_BUFFER: "ClassName"
+
     package_name: str
     simple_names: list[str]
     ignore_import: bool
@@ -499,7 +499,7 @@ class WildcardTypeName(TypeName):
         annotations: list["AnnotationSpec"] | None = None,
     ):
         super().__init__(annotations)
-        self.upper_bounds = upper_bounds or [TypeName.OBJECT]
+        self.upper_bounds = upper_bounds or [ClassName.OBJECT]
         self.lower_bounds = lower_bounds or []
 
     def emit(self, code_writer) -> None:
@@ -512,7 +512,7 @@ class WildcardTypeName(TypeName):
         code_writer.emit("?")
 
         # Emit bounds
-        if len(self.upper_bounds) == 1 and TypeName.OBJECT is not None and self.upper_bounds[0] == TypeName.OBJECT:
+        if len(self.upper_bounds) == 1 and ClassName.OBJECT is not None and self.upper_bounds[0] == ClassName.OBJECT:
             # Unbounded wildcard or has lower bounds
             pass
         else:
@@ -547,48 +547,48 @@ class WildcardTypeName(TypeName):
         return WildcardTypeName(lower_bounds=[TypeName.get(bound) for bound in lower_bounds])
 
 
-TypeName.INTEGER = ClassName.get("", "int")
-TypeName.LONG = ClassName.get("", "long")
-TypeName.DOUBLE = ClassName.get("", "double")
-TypeName.FLOAT = ClassName.get("", "float")
-TypeName.SHORT = ClassName.get("", "short")
-TypeName.BYTE = ClassName.get("", "byte")
-TypeName.CHAR = ClassName.get("", "char")
-TypeName.BOOLEAN = ClassName.get("", "boolean")
-TypeName.VOID = ClassName.get("", "void")
-TypeName.OBJECT = ClassName.get("java.lang", "Object")
-TypeName.STRING = ClassName.get("java.lang", "String")
-TypeName.LIST = ClassName.get("java.util", "List")
-TypeName.MAP = ClassName.get("java.util", "Map")
-TypeName.SET = ClassName.get("java.util", "Set")
-TypeName.COLLECTION = ClassName.get("java.util", "Collection")
-TypeName.ITERABLE = ClassName.get("java.lang", "Iterable")
-TypeName.ITERATOR = ClassName.get("java.util", "Iterator")
-TypeName.OPTIONAL = ClassName.get("java.util", "Optional")
-TypeName.STREAM = ClassName.get("java.util.stream", "Stream")
-TypeName.ARRAY_LIST = ClassName.get("java.util", "ArrayList")
-TypeName.LINKED_LIST = ClassName.get("java.util", "LinkedList")
-TypeName.HASH_MAP = ClassName.get("java.util", "HashMap")
-TypeName.LINKED_HASH_MAP = ClassName.get("java.util", "LinkedHashMap")
-TypeName.TREE_MAP = ClassName.get("java.util", "TreeMap")
-TypeName.HASH_SET = ClassName.get("java.util", "HashSet")
-TypeName.LINKED_HASH_SET = ClassName.get("java.util", "LinkedHashSet")
-TypeName.TREE_SET = ClassName.get("java.util", "TreeSet")
-TypeName.QUEUE = ClassName.get("java.util", "Queue")
-TypeName.DEQUE = ClassName.get("java.util", "Deque")
-TypeName.STACK = ClassName.get("java.util", "Stack")
-TypeName.VECTOR = ClassName.get("java.util", "Vector")
-TypeName.ENUM_SET = ClassName.get("java.util", "EnumSet")
-TypeName.ENUM_MAP = ClassName.get("java.util", "EnumMap")
-TypeName.BIG_DECIMAL = ClassName.get("java.math", "BigDecimal")
-TypeName.BIG_INTEGER = ClassName.get("java.math", "BigInteger")
-TypeName.DATE = ClassName.get("java.util", "Date")
-TypeName.CALENDAR = ClassName.get("java.util", "Calendar")
-TypeName.LOCALE = ClassName.get("java.util", "Locale")
-TypeName.FILE = ClassName.get("java.io", "File")
-TypeName.PATH = ClassName.get("java.nio.file", "Path")
-TypeName.URL = ClassName.get("java.net", "URL")
-TypeName.UUID = ClassName.get("java.util", "UUID")
-TypeName.OBJECTS = ClassName.get("java.util", "Objects")
-TypeName.STRING_BUILDER = ClassName.get("java.lang", "StringBuilder")
-TypeName.STRING_BUFFER = ClassName.get("java.lang", "StringBuffer")
+ClassName.INTEGER = ClassName.get("", "int")
+ClassName.LONG = ClassName.get("", "long")
+ClassName.DOUBLE = ClassName.get("", "double")
+ClassName.FLOAT = ClassName.get("", "float")
+ClassName.SHORT = ClassName.get("", "short")
+ClassName.BYTE = ClassName.get("", "byte")
+ClassName.CHAR = ClassName.get("", "char")
+ClassName.BOOLEAN = ClassName.get("", "boolean")
+ClassName.VOID = ClassName.get("", "void")
+ClassName.OBJECT = ClassName.get("java.lang", "Object")
+ClassName.STRING = ClassName.get("java.lang", "String")
+ClassName.LIST = ClassName.get("java.util", "List")
+ClassName.MAP = ClassName.get("java.util", "Map")
+ClassName.SET = ClassName.get("java.util", "Set")
+ClassName.COLLECTION = ClassName.get("java.util", "Collection")
+ClassName.ITERABLE = ClassName.get("java.lang", "Iterable")
+ClassName.ITERATOR = ClassName.get("java.util", "Iterator")
+ClassName.OPTIONAL = ClassName.get("java.util", "Optional")
+ClassName.STREAM = ClassName.get("java.util.stream", "Stream")
+ClassName.ARRAY_LIST = ClassName.get("java.util", "ArrayList")
+ClassName.LINKED_LIST = ClassName.get("java.util", "LinkedList")
+ClassName.HASH_MAP = ClassName.get("java.util", "HashMap")
+ClassName.LINKED_HASH_MAP = ClassName.get("java.util", "LinkedHashMap")
+ClassName.TREE_MAP = ClassName.get("java.util", "TreeMap")
+ClassName.HASH_SET = ClassName.get("java.util", "HashSet")
+ClassName.LINKED_HASH_SET = ClassName.get("java.util", "LinkedHashSet")
+ClassName.TREE_SET = ClassName.get("java.util", "TreeSet")
+ClassName.QUEUE = ClassName.get("java.util", "Queue")
+ClassName.DEQUE = ClassName.get("java.util", "Deque")
+ClassName.STACK = ClassName.get("java.util", "Stack")
+ClassName.VECTOR = ClassName.get("java.util", "Vector")
+ClassName.ENUM_SET = ClassName.get("java.util", "EnumSet")
+ClassName.ENUM_MAP = ClassName.get("java.util", "EnumMap")
+ClassName.BIG_DECIMAL = ClassName.get("java.math", "BigDecimal")
+ClassName.BIG_INTEGER = ClassName.get("java.math", "BigInteger")
+ClassName.DATE = ClassName.get("java.util", "Date")
+ClassName.CALENDAR = ClassName.get("java.util", "Calendar")
+ClassName.LOCALE = ClassName.get("java.util", "Locale")
+ClassName.FILE = ClassName.get("java.io", "File")
+ClassName.PATH = ClassName.get("java.nio.file", "Path")
+ClassName.URL = ClassName.get("java.net", "URL")
+ClassName.UUID = ClassName.get("java.util", "UUID")
+ClassName.OBJECTS = ClassName.get("java.util", "Objects")
+ClassName.STRING_BUILDER = ClassName.get("java.lang", "StringBuilder")
+ClassName.STRING_BUFFER = ClassName.get("java.lang", "StringBuffer")

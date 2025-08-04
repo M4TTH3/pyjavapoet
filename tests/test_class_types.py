@@ -22,7 +22,7 @@ from pyjavapoet.field_spec import FieldSpec
 from pyjavapoet.java_file import JavaFile
 from pyjavapoet.method_spec import MethodSpec
 from pyjavapoet.modifier import Modifier
-from pyjavapoet.type_name import TypeName, TypeVariableName
+from pyjavapoet.type_name import ClassName, TypeName, TypeVariableName
 from pyjavapoet.type_spec import TypeSpec
 
 
@@ -33,7 +33,7 @@ class ClassTypesTest(unittest.TestCase):
         """Test generating an interface."""
         # Create a constant field
         constant = (
-            FieldSpec.builder(TypeName.STRING, "ONLY_THING_THAT_IS_CONSTANT")
+            FieldSpec.builder(ClassName.STRING, "ONLY_THING_THAT_IS_CONSTANT")
             .add_modifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
             .initializer("$S", "change")
             .build()

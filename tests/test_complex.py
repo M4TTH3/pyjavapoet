@@ -43,7 +43,7 @@ class ComplexTest(unittest.TestCase):
         override_annotation = ClassName.get("java.lang", "Override")
 
         # Create a field for the processor name
-        name_field = FieldSpec.builder(TypeName.STRING, "name").add_modifiers(Modifier.PRIVATE, Modifier.FINAL).build()
+        name_field = FieldSpec.builder(ClassName.STRING, "name").add_modifiers(Modifier.PRIVATE, Modifier.FINAL).build()
 
         # Create a counter field
         counter_field = (
@@ -57,7 +57,7 @@ class ComplexTest(unittest.TestCase):
         constructor = (
             MethodSpec.constructor_builder()
             .add_modifiers(Modifier.PUBLIC)
-            .add_parameter(TypeName.STRING, "name")
+            .add_parameter(ClassName.STRING, "name")
             .add_statement("this.$N = $T.requireNonNull($N)", "name", objects_class, "name")
             .build()
         )
@@ -87,7 +87,7 @@ class ComplexTest(unittest.TestCase):
             MethodSpec.method_builder("toString")
             .add_annotation(AnnotationSpec.get(override_annotation))
             .add_modifiers(Modifier.PUBLIC)
-            .returns(TypeName.STRING)
+            .returns(ClassName.STRING)
             .add_statement("return $S + name + $S + processCount + $S", "DataProcessor{name='", "', processCount=", "}")
             .build()
         )

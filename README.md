@@ -565,10 +565,10 @@ print(str(TypeName.get("boolean"))) # Output: boolean
 print(str(TypeName.get("void")))    # Output: void
 
 # Predefined constants
-print(str(TypeName.INT))     # Output: int
-print(str(TypeName.BOOLEAN)) # Output: boolean
-print(str(TypeName.VOID))    # Output: void
-print(str(TypeName.STRING))  # Output: java.lang.String
+print(str(ClassName.INT))     # Output: int
+print(str(ClassName.BOOLEAN)) # Output: boolean
+print(str(ClassName.VOID))    # Output: void
+print(str(ClassName.STRING))  # Output: java.lang.String
 ```
 
 #### ArrayTypeName
