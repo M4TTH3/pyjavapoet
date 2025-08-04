@@ -22,7 +22,7 @@ from pyjavapoet.field_spec import FieldSpec
 from pyjavapoet.java_file import JavaFile
 from pyjavapoet.method_spec import MethodSpec
 from pyjavapoet.modifier import Modifier
-from pyjavapoet.type_name import ClassName, TypeName, TypeVariableName
+from pyjavapoet.type_name import ClassName, TypeVariableName
 from pyjavapoet.type_spec import TypeSpec
 
 

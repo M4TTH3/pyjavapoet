@@ -345,7 +345,6 @@ class TypeSpec(Code["TypeSpec"]):
 
     @staticmethod
     def anonymous_class_builder(format_string: str = "", *args) -> "AnonymousClassBuilder":
-        from pyjavapoet.type_name import TypeName
 
         builder = TypeSpec.AnonymousClassBuilder(ClassName.OBJECT)
         if format_string:
