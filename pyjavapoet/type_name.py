@@ -371,7 +371,7 @@ class ArrayTypeName(TypeName):
         return ArrayTypeName(deep_copy(self.component_type), deep_copy(self.annotations))
 
     @staticmethod
-    def of(component_type: Union["TypeName", str, type]) -> "ArrayTypeName":
+    def get(component_type: Union["TypeName", str, type]) -> "ArrayTypeName":
         return ArrayTypeName(TypeName.get(component_type))
 
 

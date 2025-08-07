@@ -65,9 +65,9 @@ class TypeNameTest(unittest.TestCase):
 
     def test_equals_and_hash_code_array_type_name(self):
         """Test equals and hash code for array types."""
-        a = ArrayTypeName.of(ClassName.get("java.lang", "String"))
-        b = ArrayTypeName.of(ClassName.get("java.lang", "String"))
-        c = ArrayTypeName.of(ClassName.get("java.lang", "Object"))
+        a = ArrayTypeName.get(ClassName.get("java.lang", "String"))
+        b = ArrayTypeName.get(ClassName.get("java.lang", "String"))
+        c = ArrayTypeName.get(ClassName.get("java.lang", "Object"))
 
         self.assertEqual(a, b)
         self.assertEqual(hash(a), hash(b))
@@ -167,11 +167,11 @@ class TypeNameTest(unittest.TestCase):
 
     def test_array_type_creation(self):
         """Test array type creation."""
-        string_array = ArrayTypeName.of(ClassName.get("java.lang", "String"))
+        string_array = ArrayTypeName.get(ClassName.get("java.lang", "String"))
         self.assertEqual(str(string_array), "String[]")
 
         # Multi-dimensional array
-        int_2d_array = ArrayTypeName.of(ArrayTypeName.of(TypeName.get("int")))
+        int_2d_array = ArrayTypeName.get(ArrayTypeName.get(TypeName.get("int")))
         self.assertEqual(str(int_2d_array), "int[][]")
 
     def test_type_variable_with_bounds(self):

@@ -114,6 +114,21 @@ class MethodSpecTest(unittest.TestCase):
         # Abstract methods should not have a body
         self.assertNotIn("{", result)
 
+    def test_method_in_interface(self):
+        """Test method in interface."""
+        method = (
+            MethodSpec.method_builder("process")
+            .returns("void")
+            .add_parameter(ClassName.get("java.lang", "Object"), "data")
+            .in_interface()
+            .build()
+        )
+
+        result = str(method)
+        self.assertIn("void process", result)
+        # Interface methods should not have a body
+        self.assertNotIn("{", result)
+
     def test_method_with_exceptions(self):
         """Test method with exceptions."""
         method = (

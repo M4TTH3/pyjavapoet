@@ -178,6 +178,34 @@ public interface Drawable {
 }
 ```
 
+**Interface Method Modifiers:**
+
+PyJavaPoet correctly handles interface methods with and without explicit modifiers:
+
+**Python Code:**
+```python
+# Interface method with explicit public modifier  
+interface_with_modifiers = TypeSpec.interface_builder("TestInterface") \
+    .add_modifiers(Modifier.PUBLIC) \
+    .add_method(MethodSpec.method_builder("word")
+                .add_modifiers(Modifier.PUBLIC)
+                .returns("void")
+                .build()) \
+    .build()
+
+java_file = JavaFile.builder("com.example", interface_with_modifiers).build()
+print(java_file)
+```
+
+**Generated Java Code:**
+```java
+package com.example;
+
+public interface TestInterface {
+  public void word();
+}
+```
+
 ### 3. Creating Enums with Custom Methods
 
 **Python Code:**
