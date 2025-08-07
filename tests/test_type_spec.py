@@ -211,11 +211,7 @@ class TypeSpecTest(unittest.TestCase):
                 .returns("void")
                 .build()
             )
-            .add_method(
-                MethodSpec.method_builder("random")
-                .returns("void")
-                .build()
-            )
+            .add_method(MethodSpec.method_builder("random").returns("void").build())
             .build()
         )
 
