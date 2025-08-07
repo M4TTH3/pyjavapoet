@@ -458,6 +458,9 @@ class TypeSpec(Code["TypeSpec"]):
             if method_spec.kind in (MethodSpec.Kind.CONSTRUCTOR, MethodSpec.Kind.COMPACT_CONSTRUCTOR):
                 method_spec = method_spec.to_builder().set_name(self.__name).build()
 
+            if self.__kind == TypeSpec.Kind.INTERFACE:
+                method_spec = method_spec.to_builder().in_interface().build()
+
             self.__methods.append(method_spec)
             return self
 

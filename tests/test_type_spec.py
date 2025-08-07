@@ -211,12 +211,23 @@ class TypeSpecTest(unittest.TestCase):
                 .returns("void")
                 .build()
             )
+            .add_method(
+                MethodSpec.method_builder("random")
+                .returns("void")
+                .build()
+            )
             .build()
         )
 
         result = str(drawable)
-        self.assertIn("public interface Drawable", result)
-        self.assertIn("public abstract void draw()", result)
+        expected = """\
+public interface Drawable {
+  public abstract void draw();
+
+  void random();
+}\
+"""
+        self.assertEqual(result, expected)
 
     def test_interface_with_default_method(self):
         """Test interface with default method."""

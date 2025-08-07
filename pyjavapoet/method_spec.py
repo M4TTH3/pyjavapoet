@@ -59,6 +59,7 @@ class MethodSpec(Code["MethodSpec"]):
         code: Optional["CodeBlock"],
         default_value: Optional["CodeBlock"],
         kind: "MethodSpec.Kind",
+        in_interface: bool,
     ):
         self.name = name
         self.modifiers = modifiers
@@ -71,7 +72,7 @@ class MethodSpec(Code["MethodSpec"]):
         self.code = code
         self.default_value = default_value
         self.kind = kind
-
+        self.in_interface = in_interface
         # Validate that constructors don't have a return type
         if self.kind == MethodSpec.Kind.CONSTRUCTOR and self.return_type is not None:
             raise ValueError("Constructors cannot have a return type")
@@ -131,11 +132,15 @@ class MethodSpec(Code["MethodSpec"]):
                 exception.emit(code_writer)
 
         # Emit body or semicolon
-        if Modifier.ABSTRACT in self.modifiers or (Modifier.NATIVE in self.modifiers and not self.default_value):
-            code_writer.emit(";\n")
-        elif self.default_value is not None:
+        if self.default_value:
             code_writer.emit(" default ")
             self.default_value.emit(code_writer)
+            code_writer.emit(";\n")
+        elif (
+            Modifier.ABSTRACT in self.modifiers
+            or Modifier.NATIVE in self.modifiers
+            or (self.in_interface and Modifier.DEFAULT not in self.modifiers)
+        ):
             code_writer.emit(";\n")
         else:
             code_writer.emit(" {\n")
@@ -160,6 +165,7 @@ class MethodSpec(Code["MethodSpec"]):
             deep_copy(self.annotations),
             self.code.to_builder() if self.code else CodeBlock.builder(),
             deep_copy(self.default_value),
+            self.in_interface,
         )
 
     @staticmethod
@@ -191,6 +197,7 @@ class MethodSpec(Code["MethodSpec"]):
         __annotations: list["AnnotationSpec"]
         __code_builder: "CodeBlock.Builder"
         __default_value: Optional["CodeBlock"]
+        __in_interface: bool
 
         def __init__(
             self,
@@ -205,6 +212,7 @@ class MethodSpec(Code["MethodSpec"]):
             annotations: list["AnnotationSpec"] | None = None,
             code_builder: Optional["CodeBlock.Builder"] = None,
             default_value: Optional["CodeBlock"] = None,
+            in_interface: bool = False,
         ):
             self.__name = name
             self.__kind = kind
@@ -217,6 +225,7 @@ class MethodSpec(Code["MethodSpec"]):
             self.__annotations = annotations or []
             self.__code_builder = code_builder or CodeBlock.builder()
             self.__default_value = default_value
+            self.__in_interface = in_interface
 
         def add_modifiers(self, *modifiers: Modifier) -> "MethodSpec.Builder":
             self.__modifiers.update(modifiers)
@@ -356,6 +365,10 @@ class MethodSpec(Code["MethodSpec"]):
             self.__default_value = CodeBlock.of(format_string, *args)
             return self
 
+        def in_interface(self) -> "MethodSpec.Builder":
+            self.__in_interface = True
+            return self
+
         def set_name(self, name: str) -> "MethodSpec.Builder":
             self.__name = name
             return self
@@ -384,4 +397,5 @@ class MethodSpec(Code["MethodSpec"]):
                 self.__code_builder.build() if self.__code_builder else None,
                 deep_copy(self.__default_value),
                 deep_copy(self.__kind),
+                self.__in_interface,
             )
