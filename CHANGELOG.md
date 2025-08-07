@@ -11,10 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - N/A
 
 ### Changed
-- N/A
+- Modified `ArrayTypeName.of()` to `ArrayTypeName.get()` for consistency with other TypeName methods
 
 ### Fixed
-- N/A
+- Fixed interface methods with no modifiers incorrectly generating function bodies - they now correctly generate as abstract method declarations (e.g., `void word();` instead of `void word() { }`)
 
 ## [0.1.3] - 2025-08-04
 - Moved all common ClassNames to be under ClassName instead of TypeName
