@@ -492,6 +492,67 @@ public class Top {
         self.assertIn("record Point", result)
         self.assertIn("implements Serializable", result)
 
+    def test_add_additional_import_arbitrary(self):
+        """Test adding an arbitrary import unrelated to existing imports."""
+        # Create a simple class with no external dependencies
+        type_spec = (
+            TypeSpec.class_builder("SimpleClass")
+            .add_modifiers(Modifier.PUBLIC)
+            .add_method(
+                MethodSpec.method_builder("doSomething")
+                .add_modifiers(Modifier.PUBLIC)
+                .returns("void")
+                .add_statement("System.out.println($S)", "Hello World")
+                .build()
+            )
+            .build()
+        )
+
+        # Build JavaFile and add an arbitrary import
+        java_file = (
+            JavaFile.builder("com.example", type_spec)
+            .add_additional_import("java.util.Collections")
+            .build()
+        )
+
+        result = str(java_file)
+        
+        # Should contain the additional import even though it's not used
+        self.assertIn("import java.util.Collections;", result)
+        # Should still contain the class
+        self.assertIn("public class SimpleClass", result)
+
+    def test_add_additional_import_wildcard_covers_existing(self):
+        """Test wildcard import that covers an existing specific import."""
+        # Create a class that uses java.util.List
+        list_type = ClassName.get("java.util", "List").with_type_arguments(ClassName.get("java.lang", "String"))
+        type_spec = (
+            TypeSpec.class_builder("ListClass")
+            .add_modifiers(Modifier.PUBLIC)
+            .add_field(
+                FieldSpec.builder(list_type, "items")
+                .add_modifiers(Modifier.PRIVATE)
+                .build()
+            )
+            .build()
+        )
+
+        # Build JavaFile and add wildcard import that covers the specific one
+        java_file = (
+            JavaFile.builder("com.example", type_spec)
+            .add_additional_import("java.util.*")
+            .build()
+        )
+
+        result = str(java_file)
+        
+        # Should contain the wildcard import
+        self.assertIn("import java.util.*;", result)
+        # Should NOT contain the specific List import since it's covered by wildcard
+        self.assertNotIn("import java.util.List;", result)
+        # Should still contain the class and use the simple name
+        self.assertIn("List<String> items", result)
+
 
 class JavaFileReadWriteTest(unittest.TestCase):
     """Test file reading functionality."""

@@ -43,12 +43,14 @@ class JavaFile(Code["JavaFile"]):
         file_comment: Optional[CodeBlock],
         indent: str,
         static_imports: dict[ClassName, set[str]],
+        additional_imports: set[str],
     ):
         self.package_name = package_name
         self.type_spec = type_spec
         self.file_comment = file_comment
         self.indent = indent
         self.static_imports = static_imports
+        self.additional_imports = additional_imports
 
     def write_to_dir(self, java_dir: Path) -> Path:
         """
@@ -92,6 +94,106 @@ class JavaFile(Code["JavaFile"]):
         self.emit(writer)
         # Write to the output
         out.write(str(writer))
+    
+    def _extract_wildcard_imports(self) -> set[str]:
+        """Extract wildcard package imports from additional imports.
+        
+        Returns:
+            Set of package names that have wildcard imports (e.g., 'java.util' for 'java.util.*')
+        """
+        wildcard_packages = set()
+        
+        for import_name in self.additional_imports:
+            if import_name.endswith(".*"):
+                # Wildcard import - extract package name
+                package = import_name[:-2]  # Remove ".*"
+                wildcard_packages.add(package)
+        
+        return wildcard_packages
+    
+    def _merge_all_specific_imports(
+        self, 
+        collected_imports: dict[str, set[str]], 
+        wildcard_packages: set[str]
+    ) -> dict[str, set[str]]:
+        """Merge all specific imports (collected + additional) while excluding wildcard-covered packages.
+        
+        Args:
+            collected_imports: Imports collected from type usage in the code
+            wildcard_packages: Packages with wildcard imports to exclude
+            
+        Returns:
+            Final resolved specific imports (excluding those covered by wildcards)
+        """
+        final_imports = {}
+        
+        # Add collected imports, but skip those covered by wildcards
+        for package, simple_names in collected_imports.items():
+            if package not in wildcard_packages:
+                if package not in final_imports:
+                    final_imports[package] = set()
+                final_imports[package].update(simple_names)
+        
+        # Process additional specific imports and add them
+        for import_name in self.additional_imports:
+            if not import_name.endswith(".*") and "." in import_name:
+                # This is a specific import, not a wildcard
+                package, simple_name = import_name.rsplit(".", 1)
+                
+                # Only add if not covered by wildcard
+                if package not in wildcard_packages:
+                    if package not in final_imports:
+                        final_imports[package] = set()
+                    final_imports[package].add(simple_name)
+        
+        return final_imports
+    
+    def _emit_all_imports(
+        self, 
+        code_writer: CodeWriter, 
+        final_imports: dict[str, set[str]], 
+        wildcard_packages: set[str]
+    ) -> None:
+        """Emit all import statements in the correct order.
+        
+        Args:
+            code_writer: The CodeWriter to emit to
+            final_imports: The resolved specific imports to emit
+            wildcard_packages: The wildcard packages to emit
+        """
+        # Emit static imports first
+        static_imports = sorted([
+            f"import static {type_name.canonical_name}.{member};"
+            for type_name, members in self.static_imports.items()
+            for member in sorted(members)
+        ])
+        
+        if static_imports:
+            for static_import in static_imports:
+                code_writer.emit(static_import)
+                code_writer.emit("\n")
+            code_writer.emit("\n")
+
+        # Combine wildcard and specific imports, then sort them together
+        all_imports = []
+        
+        # Add wildcard imports
+        for package in wildcard_packages:
+            all_imports.append(f"import {package}.*;")
+            
+        # Add specific imports
+        for package in final_imports:
+            for simple_name in final_imports[package]:
+                all_imports.append(f"import {package}.{simple_name};")
+        
+        # Sort all imports alphabetically and emit them
+        for import_statement in sorted(all_imports):
+            code_writer.emit(import_statement)
+            code_writer.emit("\n")
+
+        # Add blank line after imports if there were any
+        if all_imports:
+            code_writer.emit("\n")
 
     def emit(self, code_writer: CodeWriter) -> None:
         # Emit file comment
@@ -110,31 +212,11 @@ class JavaFile(Code["JavaFile"]):
         )
         self.type_spec.emit(import_collector)
 
-        # Get the imports
-        imports = import_collector.get_imports()
-
-        # Emit static imports
-        static_imports = sorted(
-            [
-                f"import static {type_name.canonical_name}.{member};"
-                for type_name, members in self.static_imports.items()
-                for member in sorted(members)
-            ]
-        )
-        if static_imports:
-            for static_import in static_imports:
-                code_writer.emit(static_import)
-                code_writer.emit("\n")
-            code_writer.emit("\n")
-
-        # Emit normal imports
-        import_packages = sorted(imports.keys())
-        for package in import_packages:
-            for simple_name in sorted(imports[package]):
-                code_writer.emit(f"import {package}.{simple_name};\n")
-
-        if import_packages:
-            code_writer.emit("\n")
+        # Get the imports from type usage and process all imports
+        collected_imports = import_collector.get_imports()
+        wildcard_packages = self._extract_wildcard_imports()
+        final_imports = self._merge_all_specific_imports(collected_imports, wildcard_packages)
+        self._emit_all_imports(code_writer, final_imports, wildcard_packages)
 
         # Emit the type
         self.type_spec.emit(code_writer)
@@ -151,6 +233,7 @@ class JavaFile(Code["JavaFile"]):
             self.file_comment,
             self.indent,
             self.static_imports,
+            self.additional_imports,
         )
 
     def __str__(self) -> str:
@@ -174,12 +257,14 @@ class JavaFile(Code["JavaFile"]):
             file_comment: Optional[CodeBlock] = None,
             indent: str = "  ",
             static_imports: dict[ClassName, set[str]] | None = None,
+            additional_imports: set[str] | None = None,
         ):
             self.__package_name = package_name
             self.__type_spec = type_spec
             self.__file_comment = file_comment
             self.__indent = indent
             self.__static_imports = static_imports or {}
+            self.__additional_imports = additional_imports or set()
 
         def add_file_comment(self, format_string: str = EMPTY_STRING, *args) -> "JavaFile.Builder":
             self.__file_comment = CodeBlock.add_javadoc(self.__file_comment, format_string, *args)
@@ -207,6 +292,18 @@ class JavaFile(Code["JavaFile"]):
 
             return self
 
+        def add_additional_import(self, import_name: str) -> "JavaFile.Builder":
+            """Add an additional import that will be included in the generated file.
+            
+            Args:
+                import_name: The import to add (e.g., "java.util.List" or "java.util.*")
+                
+            Returns:
+                This builder for method chaining
+            """
+            self.__additional_imports.add(import_name)
+            return self
+
         def build(self) -> "JavaFile":
             return JavaFile(
                 self.__package_name,
@@ -214,4 +311,5 @@ class JavaFile(Code["JavaFile"]):
                 self.__file_comment,
                 self.__indent,
                 self.__static_imports,
+                self.__additional_imports,
             )
