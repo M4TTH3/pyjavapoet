@@ -509,14 +509,10 @@ public class Top {
         )
 
         # Build JavaFile and add an arbitrary import
-        java_file = (
-            JavaFile.builder("com.example", type_spec)
-            .add_additional_import("java.util.Collections")
-            .build()
-        )
+        java_file = JavaFile.builder("com.example", type_spec).add_additional_import("java.util.Collections").build()
 
         result = str(java_file)
-        
+
         # Should contain the additional import even though it's not used
         self.assertIn("import java.util.Collections;", result)
         # Should still contain the class
@@ -529,23 +525,15 @@ public class Top {
         type_spec = (
             TypeSpec.class_builder("ListClass")
             .add_modifiers(Modifier.PUBLIC)
-            .add_field(
-                FieldSpec.builder(list_type, "items")
-                .add_modifiers(Modifier.PRIVATE)
-                .build()
-            )
+            .add_field(FieldSpec.builder(list_type, "items").add_modifiers(Modifier.PRIVATE).build())
             .build()
         )
 
         # Build JavaFile and add wildcard import that covers the specific one
-        java_file = (
-            JavaFile.builder("com.example", type_spec)
-            .add_additional_import("java.util.*")
-            .build()
-        )
+        java_file = JavaFile.builder("com.example", type_spec).add_additional_import("java.util.*").build()
 
         result = str(java_file)
-        
+
         # Should contain the wildcard import
         self.assertIn("import java.util.*;", result)
         # Should NOT contain the specific List import since it's covered by wildcard
