@@ -1006,7 +1006,7 @@ print(str(java_file))
 # Java file with imports and file comment
 java_file_with_imports = JavaFile.builder("com.example", simple_class) \
     .add_file_comment_line("This is a generated file.") \
-    .add_file_comment_line("Do not edit manually.") \
+    .add_file_comment_line("Do not edit manually.") \  
     .add_static_import(ClassName.get("java.lang", "System"), "out") \
     .build()
 print(str(java_file_with_imports))
@@ -1018,6 +1018,21 @@ print(str(java_file_with_imports))
 # package com.example;
 # 
 # import static java.lang.System.out;
+# 
+# public class HelloWorld {
+# }
+
+# Java file with additional imports (always outputted)
+# Note: wildcard will override any usage in prefix path
+java_file_with_additional_imports = JavaFile.builder("com.example", simple_class) \
+    .add_additional_import("java.util.Collections") \
+    .add_additional_import("java.lang.*") \
+    .build()
+# Output:  
+# package com.example;
+# 
+# import java.lang.*;
+# import java.util.Collections
 # 
 # public class HelloWorld {
 # }
