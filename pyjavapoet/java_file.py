@@ -94,80 +94,77 @@ class JavaFile(Code["JavaFile"]):
         self.emit(writer)
         # Write to the output
         out.write(str(writer))
-    
+
     def _extract_wildcard_imports(self) -> set[str]:
         """Extract wildcard package imports from additional imports.
-        
+
         Returns:
             Set of package names that have wildcard imports (e.g., 'java.util' for 'java.util.*')
         """
         wildcard_packages = set()
-        
+
         for import_name in self.additional_imports:
             if import_name.endswith(".*"):
                 # Wildcard import - extract package name
                 package = import_name[:-2]  # Remove ".*"
                 wildcard_packages.add(package)
-        
+
         return wildcard_packages
-    
+
     def _merge_all_specific_imports(
-        self, 
-        collected_imports: dict[str, set[str]], 
-        wildcard_packages: set[str]
+        self, collected_imports: dict[str, set[str]], wildcard_packages: set[str]
     ) -> dict[str, set[str]]:
         """Merge all specific imports (collected + additional) while excluding wildcard-covered packages.
-        
+
         Args:
             collected_imports: Imports collected from type usage in the code
             wildcard_packages: Packages with wildcard imports to exclude
-            
+
         Returns:
             Final resolved specific imports (excluding those covered by wildcards)
         """
         final_imports = {}
-        
+
         # Add collected imports, but skip those covered by wildcards
         for package, simple_names in collected_imports.items():
             if package not in wildcard_packages:
                 if package not in final_imports:
                     final_imports[package] = set()
                 final_imports[package].update(simple_names)
-        
+
         # Process additional specific imports and add them
         for import_name in self.additional_imports:
             if not import_name.endswith(".*") and "." in import_name:
                 # This is a specific import, not a wildcard
                 package, simple_name = import_name.rsplit(".", 1)
-                
+
                 # Only add if not covered by wildcard
                 if package not in wildcard_packages:
                     if package not in final_imports:
                         final_imports[package] = set()
                     final_imports[package].add(simple_name)
-        
+
         return final_imports
-    
+
     def _emit_all_imports(
-        self, 
-        code_writer: CodeWriter, 
-        final_imports: dict[str, set[str]], 
-        wildcard_packages: set[str]
+        self, code_writer: CodeWriter, final_imports: dict[str, set[str]], wildcard_packages: set[str]
     ) -> None:
         """Emit all import statements in the correct order.
-        
+
         Args:
             code_writer: The CodeWriter to emit to
             final_imports: The resolved specific imports to emit
             wildcard_packages: The wildcard packages to emit
         """
         # Emit static imports first
-        static_imports = sorted([
-            f"import static {type_name.canonical_name}.{member};"
-            for type_name, members in self.static_imports.items()
-            for member in sorted(members)
-        ])
-        
+        static_imports = sorted(
+            [
+                f"import static {type_name.canonical_name}.{member};"
+                for type_name, members in self.static_imports.items()
+                for member in sorted(members)
+            ]
+        )
+
         if static_imports:
             for static_import in static_imports:
                 code_writer.emit(static_import)
@@ -176,16 +173,16 @@ class JavaFile(Code["JavaFile"]):
 
         # Combine wildcard and specific imports, then sort them together
         all_imports = []
-        
+
         # Add wildcard imports
         for package in wildcard_packages:
             all_imports.append(f"import {package}.*;")
-            
+
         # Add specific imports
         for package in final_imports:
             for simple_name in final_imports[package]:
                 all_imports.append(f"import {package}.{simple_name};")
-        
+
         # Sort all imports alphabetically and emit them
         for import_statement in sorted(all_imports):
             code_writer.emit(import_statement)
@@ -294,10 +291,10 @@ class JavaFile(Code["JavaFile"]):
 
         def add_additional_import(self, import_name: str) -> "JavaFile.Builder":
             """Add an additional import that will be included in the generated file.
-            
+
             Args:
                 import_name: The import to add (e.g., "java.util.List" or "java.util.*")
-                
+
             Returns:
                 This builder for method chaining
             """
